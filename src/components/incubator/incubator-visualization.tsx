@@ -54,7 +54,7 @@ export default function IncubatorVisualization() {
           </div>
           
           {/* Egg Trays */}
-          <div className={cn("w-full max-w-md space-y-2", data.control.motor && "animate-egg-turn")}>
+          <div className={cn("w-full max-w-md space-y-2")}>
             <EggTray eggCount={tray1Eggs} />
             <EggTray eggCount={tray2Eggs} />
           </div>

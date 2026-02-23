@@ -88,17 +88,12 @@ export default {
             height: '0',
           },
         },
-        'egg-turn': {
-          '0%, 100%': { transform: 'rotate(0deg)' },
-          '25%, 75%': { transform: 'rotate(180deg)' },
-        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'pulse-rapid': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'egg-turn': 'egg-turn 4s ease-in-out infinite',
       },
     },
   },
