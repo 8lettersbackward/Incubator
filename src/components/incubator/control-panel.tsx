@@ -1,97 +1,84 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useIncubator } from "@/contexts/incubator-context";
-import { Fan, Lightbulb, Repeat, AlertTriangle, Cog, Bot } from "lucide-react";
-import UnlockDialog from "./unlock-dialog";
-import AccessCodeDialog from "./access-code-dialog";
-import AiGuidanceDialog from "./ai-guidance-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
+import { Fan, Thermometer, Droplets, Bell } from "lucide-react";
+import EnvironmentSlider from "./environment-slider";
+import { Separator } from "@/components/ui/separator";
+import StatusIndicator from "../shared/status-indicator";
 
 export default function ControlPanel() {
-  const { data, isLocked, toggleHeater, toggleFan, manualTurn, emergencyStop, setEggType } = useIncubator();
+  const { data, isLocked, toggleFan } = useIncubator();
 
-  const eggTypes = ["Chicken", "Quail", "Duck", "Turkey", "Goose"];
+  // Define safe ranges for chicken eggs as a default
+  const tempSafeMin = 37.0;
+  const tempSafeMax = 38.0;
+  const humiditySafeMin = 55;
+  const humiditySafeMax = 65;
+
+  const tempIsSafe = data.sensors.temperature >= tempSafeMin && data.sensors.temperature <= tempSafeMax;
+  const humidityIsSafe = data.sensors.humidity >= humiditySafeMin && data.sensors.humidity <= humiditySafeMax;
 
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Control Panel</CardTitle>
-        <CardDescription>Manual controls and system settings</CardDescription>
+        <CardTitle>Environmental Monitoring</CardTitle>
+        <CardDescription>Live sensor data and system alerts.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 pt-4">
-        <div className="space-y-2">
-          <Label htmlFor="egg-type-select">Egg Type</Label>
-          <Select value={data.eggType} onValueChange={setEggType} disabled={isLocked}>
-            <SelectTrigger id="egg-type-select" className="w-full">
-              <SelectValue placeholder="Select Egg Type" />
-            </SelectTrigger>
-            <SelectContent>
-              {eggTypes.map(type => (
-                <SelectItem key={type} value={type}>{type}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center space-x-2">
-            <Switch id="heater-switch" checked={data.control.heater} onCheckedChange={toggleHeater} disabled={isLocked} />
-            <Label htmlFor="heater-switch" className="flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-primary" />
-                Heater
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Switch id="fan-switch" checked={data.control.fan} onCheckedChange={toggleFan} disabled={isLocked} />
-            <Label htmlFor="fan-switch" className="flex items-center gap-2">
-                <Fan className="w-5 h-5 text-primary" />
-                Fan
-            </Label>
-          </div>
-        </div>
-
-        <Button onClick={manualTurn} disabled={isLocked || data.control.motor} className="w-full">
-          <Repeat className="mr-2 h-4 w-4" />
-          Manual Turn
-        </Button>
+        <EnvironmentSlider
+          label="Temperature"
+          icon={<Thermometer className="w-5 h-5 text-muted-foreground" />}
+          value={data.sensors.temperature}
+          min={30}
+          max={45}
+          safeMin={tempSafeMin}
+          safeMax={tempSafeMax}
+          unit="°C"
+          isSafe={tempIsSafe}
+        />
+        <EnvironmentSlider
+          label="Humidity"
+          icon={<Droplets className="w-5 h-5 text-muted-foreground" />}
+          value={data.sensors.humidity}
+          min={40}
+          max={80}
+          safeMin={humiditySafeMin}
+          safeMax={humiditySafeMax}
+          unit="%"
+          isSafe={humidityIsSafe}
+        />
         
-        <div className="border-t border-border pt-6 space-y-4">
-            <div className="flex justify-between items-center">
-                <Label className="text-base font-medium">System Access</Label>
-                <UnlockDialog>
-                    <Button variant={isLocked ? "default" : "secondary"}>
-                        {isLocked ? "Unlock" : "Locked"}
-                    </Button>
-                </UnlockDialog>
-            </div>
-            <div className="flex gap-2">
-                <AccessCodeDialog>
-                    <Button variant="outline" className="w-full" disabled={isLocked}>
-                        <Cog className="mr-2 h-4 w-4" /> Change PIN
-                    </Button>
-                </AccessCodeDialog>
+        <Separator />
 
-                <AiGuidanceDialog>
-                    <Button variant="outline" className="w-full">
-                        <Bot className="mr-2 h-4 w-4" /> AI Guidance
-                    </Button>
-                </AiGuidanceDialog>
+        <div className="space-y-3">
+            <h4 className="text-sm font-medium text-foreground">System Alerts</h4>
+            <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Bell className="w-4 h-4" />
+                    <span>Buzzer</span>
+                </div>
+                <StatusIndicator label={data.status.buzzerActive ? "Active" : "Off"} isActive={data.status.buzzerActive} activeColor="bg-destructive" />
             </div>
-            <Button onClick={emergencyStop} variant="destructive" className="w-full" disabled={isLocked}>
-                <AlertTriangle className="mr-2 h-4 w-4" />
-                Emergency Stop
-            </Button>
+            <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Thermometer className="w-4 h-4" />
+                    <span>Temp. Alert</span>
+                </div>
+                <StatusIndicator label={data.status.criticalTempAlert ? "Active" : "OK"} isActive={data.status.criticalTempAlert} activeColor="bg-destructive" />
+            </div>
+        </div>
+
+        <Separator />
+        
+        <div className="flex items-center justify-between">
+            <Label htmlFor="fan-switch" className="flex items-center gap-2 font-medium">
+                <Fan className="w-5 h-5 text-primary" />
+                Ventilation Fan
+            </Label>
+            <Switch id="fan-switch" checked={data.control.fan} onCheckedChange={toggleFan} disabled={isLocked} />
         </div>
       </CardContent>
     </Card>

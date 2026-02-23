@@ -24,6 +24,8 @@ export interface IncubatorData {
     deviceOnline: boolean;
     wifiConnected: boolean;
     systemLocked: boolean;
+    buzzerActive: boolean;
+    criticalTempAlert: boolean;
   };
   eggType: string; // UI-specific, not in DB schema but useful for context
 }
@@ -62,6 +64,8 @@ const initialData: IncubatorData = {
     deviceOnline: false,
     wifiConnected: false,
     systemLocked: true,
+    buzzerActive: false,
+    criticalTempAlert: false,
   },
   eggType: 'Chicken',
 };
