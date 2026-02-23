@@ -55,7 +55,7 @@ export default function IncubatorVisualization() {
           </div>
 
           <div className="absolute bottom-2 right-4 text-xs font-mono text-muted-foreground">
-            EGG TYPE: {data.eggType.toUpperCase()}
+            EGG TYPE: {(data.eggType || "").toUpperCase()}
           </div>
         </div>
       </CardContent>
