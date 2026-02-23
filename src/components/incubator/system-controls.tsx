@@ -32,14 +32,14 @@ export default function SystemControls() {
             onCheckedChange: toggleHeater,
         },
         {
-            icon: <Fan className="w-6 h-6 text-primary" />,
+            icon: <Fan className={cn("w-6 h-6 text-primary", data.control.fan && "animate-spin")} />,
             label: "Ventilation Fan",
             description: "Air circulation system",
             checked: data.control.fan,
             onCheckedChange: toggleFan,
         },
         {
-            icon: <RotateCw className="w-6 h-6 text-primary" />,
+            icon: <RotateCw className={cn("w-6 h-6 text-primary", data.control.motor && "animate-spin")} />,
             label: "Turning Motor",
             description: "Automatic egg rotation",
             checked: data.control.motor,

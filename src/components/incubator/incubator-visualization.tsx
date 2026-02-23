@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { useIncubator } from "@/contexts/incubator-context";
-import { Fan, Lightbulb } from "lucide-react";
+import { Fan, Lightbulb, RotateCw } from "lucide-react";
 import StatusIndicator from "@/components/shared/status-indicator";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +50,7 @@ export default function IncubatorVisualization() {
           {/* Top components */}
           <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
             <Lightbulb className={cn("w-8 h-8 text-muted-foreground transition-all", data.control.heater && "text-yellow-400 drop-shadow-[0_0_8px_theme(colors.yellow.400)]")} />
+            <RotateCw className={cn("w-8 h-8 text-muted-foreground transition-all", data.control.motor && "animate-spin text-blue-500")} />
             <Fan className={cn("w-8 h-8 text-muted-foreground transition-all", data.control.fan && "animate-spin text-accent")} />
           </div>
           
