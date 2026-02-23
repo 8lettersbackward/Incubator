@@ -23,6 +23,13 @@ export default function IncubationProgress() {
     setTotalIncubationDays(days);
   };
 
+  const getRemainingDaysText = () => {
+    if (remainingDays < 0) return `Hatched`;
+    if (remainingDays === 0) return 'Hatching Today';
+    if (remainingDays === 1) return '1 day remaining';
+    return `${remainingDays} days remaining`;
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -35,6 +42,11 @@ export default function IncubationProgress() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 pt-2">
+        <div className="text-center">
+            <p className="text-2xl font-bold">{incubationDay}<span className="text-base font-normal text-muted-foreground">/{totalIncubationDays} days</span></p>
+            <p className="text-sm text-primary font-medium">{getRemainingDaysText()}</p>
+        </div>
+        
         <div>
           <Progress value={progressPercentage} className="h-3" />
           <div className="mt-2 flex justify-between text-xs text-muted-foreground">
@@ -43,11 +55,6 @@ export default function IncubationProgress() {
           </div>
         </div>
         
-        <div className="text-center">
-            <p className="text-2xl font-bold">{incubationDay}<span className="text-base font-normal text-muted-foreground">/{totalIncubationDays} days</span></p>
-            <p className="text-sm text-accent">{remainingDays} days remaining</p>
-        </div>
-
         <div className="space-y-3">
           <p className="text-sm font-medium text-center text-muted-foreground">Duration Presets</p>
           <div className="grid grid-cols-3 gap-2">
