@@ -6,11 +6,11 @@ import { Fan, Lightbulb, Repeat, Wifi, Droplets } from "lucide-react";
 import StatusIndicator from "@/components/shared/status-indicator";
 import { cn } from "@/lib/utils";
 
-const Egg = () => <div className="w-5 h-7 bg-orange-200/50 rounded-[50%/60%_60%_40%_40%] border border-orange-200/60" />;
+const Egg = () => <div className="w-4 h-5 bg-orange-200/50 rounded-[50%/60%_60%_40%_40%] border border-orange-200/60" />;
 
 const EggTray = () => (
-  <div className="grid grid-cols-6 gap-2 p-2 bg-black/20 rounded-md">
-    {Array.from({ length: 12 }).map((_, i) => (
+  <div className="grid grid-cols-10 gap-1 p-1 bg-black/20 rounded-md">
+    {Array.from({ length: 50 }).map((_, i) => (
       <Egg key={i} />
     ))}
   </div>
@@ -49,7 +49,7 @@ export default function IncubatorVisualization() {
           </div>
           
           {/* Egg Trays */}
-          <div className="w-full max-w-md space-y-4">
+          <div className="w-full max-w-md space-y-2">
             <EggTray />
             <EggTray />
           </div>
