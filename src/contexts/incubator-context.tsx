@@ -129,6 +129,17 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
 
     const { temperature, humidity } = data.sensors;
     
+    // Fixed optimal reference values
+    const OPTIMAL_TEMP_NORMAL_MIN = 37.0;
+    const OPTIMAL_TEMP_NORMAL_MAX = 38.0;
+    const OPTIMAL_TEMP_CRITICAL_LOW = 36.5;
+    const OPTIMAL_TEMP_CRITICAL_HIGH = 38.5;
+
+    const OPTIMAL_HUMIDITY_NORMAL_MIN = 40;
+    const OPTIMAL_HUMIDITY_NORMAL_MAX = 60;
+    const OPTIMAL_HUMIDITY_WARNING_LOW = 35;
+    const OPTIMAL_HUMIDITY_WARNING_HIGH = 65;
+    
     const newAlert: AlertSystem = {
       status: 'SYSTEM_OK',
       temperatureState: 'NORMAL',
@@ -138,31 +149,31 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     };
 
     // Temperature check
-    if (temperature < 36.0) {
+    if (temperature < OPTIMAL_TEMP_CRITICAL_LOW) {
       newAlert.status = 'CRITICAL';
       newAlert.temperatureState = 'LOW';
-    } else if (temperature < 37.0) {
+    } else if (temperature < OPTIMAL_TEMP_NORMAL_MIN) {
       newAlert.status = 'WARNING';
       newAlert.temperatureState = 'LOW';
-    } else if (temperature > 39.0) {
+    } else if (temperature > OPTIMAL_TEMP_CRITICAL_HIGH) {
       newAlert.status = 'CRITICAL';
       newAlert.temperatureState = 'HIGH';
-    } else if (temperature > 38.0) {
+    } else if (temperature > OPTIMAL_TEMP_NORMAL_MAX) {
       newAlert.status = 'WARNING';
       newAlert.temperatureState = 'HIGH';
     }
 
     // Humidity check, potentially escalating status
-    if (humidity < 45) {
+    if (humidity < OPTIMAL_HUMIDITY_WARNING_LOW) {
       newAlert.status = 'CRITICAL';
       newAlert.humidityState = 'LOW';
-    } else if (humidity < 50) {
+    } else if (humidity < OPTIMAL_HUMIDITY_NORMAL_MIN) {
       if (newAlert.status !== 'CRITICAL') newAlert.status = 'WARNING';
       newAlert.humidityState = 'LOW';
-    } else if (humidity > 65) {
+    } else if (humidity > OPTIMAL_HUMIDITY_WARNING_HIGH) {
       newAlert.status = 'CRITICAL';
       newAlert.humidityState = 'HIGH';
-    } else if (humidity > 60) {
+    } else if (humidity > OPTIMAL_HUMIDITY_NORMAL_MAX) {
       if (newAlert.status !== 'CRITICAL') newAlert.status = 'WARNING';
       newAlert.humidityState = 'HIGH';
     }
