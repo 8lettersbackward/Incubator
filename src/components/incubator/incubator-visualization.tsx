@@ -31,11 +31,13 @@ export default function IncubatorVisualization() {
                     {data.sensors.humidity}% RH
                 </p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-2 text-xs sm:gap-y-1">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-x-3 gap-y-2 text-xs">
                 <StatusIndicator label="Heat Lamp" isActive={data.control.heater} />
                 <StatusIndicator label="Ventilation" isActive={data.control.fan} />
                 <StatusIndicator label="Turning" isActive={data.control.motor} activeColor="bg-blue-500" />
-                <StatusIndicator label="Water" isActive={data.sensors.waterLevel !== 'LOW'} />
+                <StatusIndicator label={`Water ${data.sensors.waterPercent}%`} isActive={data.sensors.waterPercent > 5} />
+                <StatusIndicator label="Camera On" isActive={data.control.cameraOn} />
+                <StatusIndicator label="WiFi Connected" isActive={data.control.wifiConnected} />
             </div>
         </div>
 

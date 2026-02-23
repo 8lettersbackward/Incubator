@@ -14,6 +14,8 @@ export interface IncubatorData {
     humidityControl: boolean;
     targetTemperature: number;
     targetHumidity: number;
+    cameraOn: boolean;
+    wifiConnected: boolean;
   };
   sensors: {
     temperature: number;
@@ -48,6 +50,8 @@ const initialData: IncubatorData = {
     humidityControl: false,
     targetTemperature: 37.5,
     targetHumidity: 60,
+    cameraOn: true,
+    wifiConnected: true,
   },
   sensors: {
     temperature: 0,
