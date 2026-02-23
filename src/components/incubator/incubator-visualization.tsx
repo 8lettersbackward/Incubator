@@ -55,8 +55,8 @@ export default function IncubatorVisualization() {
           
           {/* Egg Trays */}
           <div className={cn(
-              "w-full max-w-md space-y-2 transition-transform duration-1000 ease-in-out",
-              control.motor && sensors.eggsTurned && "rotate-180"
+              "w-full max-w-md space-y-2",
+              control.motor && "animate-slow-rotate"
             )}>
             <EggTray eggCount={tray1Eggs} />
             <EggTray eggCount={tray2Eggs} />

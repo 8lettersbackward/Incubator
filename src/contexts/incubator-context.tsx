@@ -136,28 +136,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
   useEffect(() => {
-    let turnInterval: NodeJS.Timeout | undefined;
-
-    if (data.control.motor) {
-      // Rotates every 3 hours. Using a 4-second interval for demonstration.
-      const TURN_INTERVAL = 4000; // For 3 hours, use: 3 * 60 * 60 * 1000;
-
-      turnInterval = setInterval(() => {
-        if (!database) return;
-        const turnedRef = ref(database, 'incubator/sensors/eggsTurned');
-        // Use the ref to get the latest value and avoid stale closure state
-        set(turnedRef, !dataRef.current.sensors.eggsTurned);
-      }, TURN_INTERVAL);
-    }
-
-    return () => {
-      if (turnInterval) {
-        clearInterval(turnInterval);
-      }
-    };
-  }, [data.control.motor]);
-
-  useEffect(() => {
     if (!database || !data.sensors || !data.alertSystem) return;
 
     const { temperature, humidity } = data.sensors;
