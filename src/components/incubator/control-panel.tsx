@@ -13,6 +13,7 @@ import UnlockDialog from "./unlock-dialog";
 import { Button } from "../ui/button";
 import AccessCodeDialog from "./access-code-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SystemStatus from "./system-status";
 
 export default function ControlPanel() {
   const { data, toggleFan, isLocked, lock, setEggType, setTargetTemperature, setTargetHumidity } = useIncubator();
@@ -55,6 +56,8 @@ export default function ControlPanel() {
             isLocked && "blur-sm opacity-50 pointer-events-none"
           )}
         >
+          <SystemStatus alertSystem={data.alertSystem} />
+          
           <div className="space-y-3">
             <div className="flex justify-between items-center">
                 <Label className="flex items-center gap-2">

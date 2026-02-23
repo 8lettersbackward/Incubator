@@ -6,6 +6,14 @@ import { ref, onValue, set, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
 
 // Data types
+export interface AlertSystem {
+  status: 'SYSTEM_OK' | 'WARNING' | 'CRITICAL';
+  temperatureState: 'NORMAL' | 'HIGH' | 'LOW';
+  humidityState: 'NORMAL' | 'HIGH' | 'LOW';
+  buzzer: boolean;
+  message: string;
+}
+
 export interface IncubatorData {
   control: {
     heater: boolean;
@@ -24,6 +32,7 @@ export interface IncubatorData {
     waterPercent: number;
     eggsTurned: boolean;
   };
+  alertSystem: AlertSystem;
   eggType: string;
   incubationDay: number;
   totalIncubationDays: number;
@@ -73,6 +82,13 @@ const initialData: IncubatorData = {
     waterLevel: "LOW",
     waterPercent: 0,
     eggsTurned: false,
+  },
+  alertSystem: {
+    status: "SYSTEM_OK",
+    temperatureState: "NORMAL",
+    humidityState: "NORMAL",
+    buzzer: false,
+    message: "Incubation Stable",
   },
   eggType: 'Chicken',
   incubationDay: 1,
