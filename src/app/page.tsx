@@ -6,6 +6,7 @@ import ControlPanel from '@/components/incubator/control-panel';
 import WaterManagement from '@/components/incubator/water-management';
 import CameraConnectivity from '@/components/incubator/camera-connectivity';
 import ComponentsGuide from '@/components/incubator/components-guide';
+import SystemControls from '@/components/incubator/system-controls';
 
 export default function Home() {
   return (
@@ -16,12 +17,15 @@ export default function Home() {
           <div className="lg:col-span-3">
             <IncubatorVisualization />
           </div>
-          <div className="lg:col-span-1 lg:row-span-2">
+          <div className="lg:col-span-1">
             <ControlPanel />
           </div>
           <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
             <WaterManagement />
             <CameraConnectivity />
+          </div>
+          <div className="lg:col-span-1">
+            <SystemControls />
           </div>
           <div className="lg:col-span-4">
             <ComponentsGuide />
