@@ -18,7 +18,7 @@ const EggTray = ({ eggCount }: { eggCount: number }) => (
 
 export default function IncubatorVisualization() {
   const { data } = useIncubator();
-  const { numberOfEggs = 0 } = data;
+  const { numberOfEggs = 0, control, sensors } = data;
 
   const tray1Eggs = Math.min(numberOfEggs, 56);
   const tray2Eggs = Math.max(0, numberOfEggs - 56);
@@ -54,7 +54,10 @@ export default function IncubatorVisualization() {
           </div>
           
           {/* Egg Trays */}
-          <div className={cn("w-full max-w-md space-y-2")}>
+          <div className={cn(
+              "w-full max-w-md space-y-2 transition-transform duration-1000 ease-in-out",
+              control.motor && sensors.eggsTurned && "rotate-180"
+            )}>
             <EggTray eggCount={tray1Eggs} />
             <EggTray eggCount={tray2Eggs} />
           </div>
