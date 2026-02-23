@@ -53,11 +53,11 @@ const PinPad = ({ onUnlockSuccess }: { onUnlockSuccess: () => void }) => {
 
             <div className="grid grid-cols-3 gap-2">
                 {[...Array(9).keys()].map(i => i + 1).map(digit => (
-                    <Button key={digit} variant="outline" size="icon" className="w-16 h-16 text-2xl font-mono" onClick={() => handlePinClick(String(digit))}>{digit}</Button>
+                    <Button key={digit} variant="outline" size="icon" className="w-14 h-14 sm:w-16 sm:h-16 text-2xl font-mono" onClick={() => handlePinClick(String(digit))}>{digit}</Button>
                 ))}
-                <Button variant="outline" size="icon" className="w-16 h-16" onClick={handleClear} aria-label="Clear"><X className="w-6 h-6"/></Button>
-                <Button variant="outline" size="icon" className="w-16 h-16 text-2xl font-mono" onClick={() => handlePinClick('0')}>0</Button>
-                <Button variant="outline" size="icon" className="w-16 h-16" onClick={handleBackspace} aria-label="Backspace"><Delete className="w-6 h-6"/></Button>
+                <Button variant="outline" size="icon" className="w-14 h-14 sm:w-16 sm:h-16" onClick={handleClear} aria-label="Clear"><X className="w-6 h-6"/></Button>
+                <Button variant="outline" size="icon" className="w-14 h-14 sm:w-16 sm:h-16 text-2xl font-mono" onClick={() => handlePinClick('0')}>0</Button>
+                <Button variant="outline" size="icon" className="w-14 h-14 sm:w-16 sm:h-16" onClick={handleBackspace} aria-label="Backspace"><Delete className="w-6 h-6"/></Button>
             </div>
             
             <Button onClick={handleUnlock} className="w-full mt-2">Unlock</Button>

@@ -22,23 +22,23 @@ export default function IncubatorVisualization() {
   return (
     <Card className="h-full">
       <CardContent className="p-4 md:p-6 h-full flex flex-col">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-end gap-4">
-            <h2 className="text-4xl md:text-5xl font-bold text-primary tracking-tighter">
-              {data.temperature.toFixed(1)}°C
-            </h2>
-            <p className="text-2xl md:text-3xl font-medium text-accent tracking-tighter mb-1">
-              {data.humidity}% RH
-            </p>
-          </div>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-x-3 gap-y-1 text-xs">
-            <StatusIndicator label="Heat Lamp" isActive={data.isHeaterActive} />
-            <StatusIndicator label="Ventilation" isActive={data.isFanActive} />
-            <StatusIndicator label="Turning" isActive={data.isTurningMotorActive} activeColor="bg-blue-500" />
-            <StatusIndicator label="Water" isActive={data.waterLevel > 20} />
-            <StatusIndicator label="Camera" isActive={data.camera.isOn} />
-            <StatusIndicator label="WiFi" isActive={data.wifi.connected} />
-          </div>
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
+            <div className="flex items-end gap-2 sm:gap-4">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary tracking-tighter">
+                    {data.temperature.toFixed(1)}°C
+                </h2>
+                <p className="text-xl sm:text-2xl md:text-3xl font-medium text-accent tracking-tighter mb-0.5 sm:mb-1">
+                    {data.humidity}% RH
+                </p>
+            </div>
+            <div className="grid grid-cols-3 gap-x-3 gap-y-2 text-xs sm:grid-cols-6 sm:gap-y-1">
+                <StatusIndicator label="Heat Lamp" isActive={data.isHeaterActive} />
+                <StatusIndicator label="Ventilation" isActive={data.isFanActive} />
+                <StatusIndicator label="Turning" isActive={data.isTurningMotorActive} activeColor="bg-blue-500" />
+                <StatusIndicator label="Water" isActive={data.waterLevel > 20} />
+                <StatusIndicator label="Camera" isActive={data.camera.isOn} />
+                <StatusIndicator label="WiFi" isActive={data.wifi.connected} />
+            </div>
         </div>
 
         <div className="flex-1 relative bg-black/20 border border-border rounded-lg p-4 flex flex-col items-center justify-center gap-4">
