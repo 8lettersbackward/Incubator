@@ -2,7 +2,7 @@
 
 import { useIncubator } from '@/contexts/incubator-context';
 import { cn } from '@/lib/utils';
-import { ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, ShieldX, BellRing } from 'lucide-react';
 
 type SystemStatusType = 'OK' | 'Warning' | 'Critical';
 
@@ -46,17 +46,45 @@ const statusConfig: {
 export default function SystemStatus() {
   const { data } = useIncubator();
   
-  const status: SystemStatusType = data.alertSystem?.status || 'OK';
+  let status: SystemStatusType;
+  switch (data.alertSystem?.status) {
+    case 'SYSTEM_OK':
+      status = 'OK';
+      break;
+    case 'WARNING':
+      status = 'Warning';
+      break;
+    case 'CRITICAL':
+      status = 'Critical';
+      break;
+    default:
+      status = 'OK';
+  }
+
   const message = data.alertSystem?.message || statusConfig[status].description;
   const config = statusConfig[status];
   const Icon = config.icon;
+  const isBuzzerActive = data.alertSystem?.buzzer === true;
 
   return (
-    <div className={cn('rounded-lg border p-4 flex items-center gap-4', config.baseClass)}>
-      <Icon className={cn('h-7 w-7 shrink-0', config.iconClass, config.animation)} />
-      <div>
-        <h4 className={cn('font-semibold', config.iconClass)}>{config.label}</h4>
+    <div className={cn('rounded-lg border p-4 flex items-start gap-4', config.baseClass)}>
+      <Icon className={cn('h-7 w-7 shrink-0 mt-0.5', config.iconClass, config.animation)} />
+      <div className="flex-1">
+        <div className="flex justify-between items-center">
+            <h4 className={cn('font-semibold', config.iconClass)}>{config.label}</h4>
+            {isBuzzerActive && <BellRing className="w-5 h-5 text-destructive animate-pulse" />}
+        </div>
         <p className="text-sm text-muted-foreground">{message}</p>
+        {(status === 'Warning' || status === 'Critical') && (
+            <div className="text-xs mt-2 space-y-1 text-muted-foreground">
+                {data.alertSystem?.temperatureState !== 'NORMAL' && (
+                    <p><span className="font-semibold text-foreground">Temp:</span> {data.alertSystem?.temperatureState}</p>
+                )}
+                {data.alertSystem?.humidityState !== 'NORMAL' && (
+                    <p><span className="font-semibold text-foreground">Humidity:</span> {data.alertSystem?.humidityState}</p>
+                )}
+            </div>
+        )}
       </div>
     </div>
   );

@@ -11,7 +11,6 @@ export interface IncubatorData {
     heater: boolean;
     fan: boolean;
     motor: boolean;
-    humidityControl: boolean;
     targetTemperature: number;
     targetHumidity: number;
   };
@@ -19,15 +18,16 @@ export interface IncubatorData {
     temperature: number;
     humidity: number;
     waterLevel: string;
-    eggsTurned: boolean;
   };
   status: {
     deviceOnline: boolean;
     wifiConnected: boolean;
-    buzzerActive: boolean;
   };
   alertSystem: {
-    status: 'OK' | 'Warning' | 'Critical';
+    status: string; // e.g., 'SYSTEM_OK', 'WARNING', 'CRITICAL'
+    temperatureState: string; // e.g., 'NORMAL', 'LOW', 'HIGH'
+    humidityState: string; // e.g., 'NORMAL', 'LOW', 'HIGH'
+    buzzer: boolean;
     message: string;
   };
   eggType: string;
@@ -52,7 +52,6 @@ const initialData: IncubatorData = {
     heater: false,
     fan: false,
     motor: false,
-    humidityControl: false,
     targetTemperature: 37.5,
     targetHumidity: 60,
   },
@@ -60,15 +59,16 @@ const initialData: IncubatorData = {
     temperature: 0,
     humidity: 0,
     waterLevel: "LOW",
-    eggsTurned: false,
   },
   status: {
     deviceOnline: false,
     wifiConnected: false,
-    buzzerActive: false,
   },
   alertSystem: {
-    status: 'OK',
+    status: 'SYSTEM_OK',
+    temperatureState: 'NORMAL',
+    humidityState: 'NORMAL',
+    buzzer: false,
     message: 'Conditions are optimal.',
   },
   eggType: 'Chicken',
@@ -98,10 +98,10 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
         const dbData = snapshot.val();
         setData(prev => ({
             ...prev,
-            control: { ...initialData.control, ...dbData.control },
-            sensors: { ...initialData.sensors, ...dbData.sensors },
-            status: { ...initialData.status, ...dbData.status },
-            alertSystem: { ...initialData.alertSystem, ...dbData.alertSystem },
+            control: { ...prev.control, ...dbData.control },
+            sensors: { ...prev.sensors, ...dbData.sensors },
+            status: { ...prev.status, ...dbData.status },
+            alertSystem: { ...prev.alertSystem, ...dbData.alertSystem },
         }));
       } else {
         const { eggType, ...rest } = initialData;

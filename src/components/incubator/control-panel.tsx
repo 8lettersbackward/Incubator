@@ -30,14 +30,8 @@ export default function ControlPanel() {
   }, [data.control.targetHumidity]);
 
 
-  // Define safe ranges for chicken eggs as a default
-  const tempSafeMin = 37.0;
-  const tempSafeMax = 38.0;
-  const humiditySafeMin = 55;
-  const humiditySafeMax = 65;
-
-  const tempIsSafe = data.sensors.temperature >= tempSafeMin && data.sensors.temperature <= tempSafeMax;
-  const humidityIsSafe = data.sensors.humidity >= humiditySafeMin && data.sensors.humidity <= humiditySafeMax;
+  const tempIsSafe = data.alertSystem?.temperatureState === 'NORMAL';
+  const humidityIsSafe = data.alertSystem?.humidityState === 'NORMAL';
 
   return (
     <Card className="h-full overflow-hidden">
