@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useIncubator } from "@/contexts/incubator-context";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 
 export function EmergencyStopDialog({ children }: { children: React.ReactNode }) {
   const { emergencyStop, isLocked } = useIncubator();

@@ -41,7 +41,7 @@ export default function UnlockDialog({ children }: { children: React.ReactNode }
   };
   
   if (!isLocked) {
-      return children;
+      return <>{children}</>;
   }
 
   return (
