@@ -30,10 +30,13 @@ export interface IncubatorData {
 
 interface IncubatorContextType {
   data: IncubatorData;
+  isLocked: boolean;
   toggleFan: () => void;
-  emergencyStop: () => void;
   refillWater: () => void;
   setEggType: (eggType: string) => void;
+  unlock: (pin: string) => Promise<boolean>;
+  lock: () => void;
+  setAccessCode: (newPin: string) => void;
 }
 
 // Initial State
@@ -63,6 +66,8 @@ const IncubatorContext = createContext<IncubatorContextType | undefined>(undefin
 
 export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState<IncubatorData>(initialData);
+  const [isLocked, setIsLocked] = useState(true);
+  const [accessCode, setAccessCode] = useState('1234'); // Default PIN
   const { toast } = useToast();
 
   useEffect(() => {
@@ -94,35 +99,81 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
   
   const setControlValue = useCallback((key: string, value: any) => {
-    if (!database) return;
+    if (isLocked) {
+      toast({
+        variant: "destructive",
+        title: "System Locked",
+        description: "Unlock the system to make changes.",
+      });
+      return false;
+    }
+    if (!database) return false;
     const controlRef = ref(database, `incubator/control/${key}`);
     set(controlRef, value);
-  }, []);
+    return true;
+  }, [isLocked, toast]);
 
-  const toggleFan = useCallback(() => setControlValue('fan', !data.control.fan), [setControlValue, data.control.fan]);
-
-  const emergencyStop = useCallback(() => {
-    if (!database) return;
-    const controlRef = ref(database, 'incubator/control');
-    set(controlRef, {
-        heater: false,
-        fan: false,
-        motor: false,
-        humidityControl: false,
-    });
-  }, []);
+  const toggleFan = useCallback(() => {
+    setControlValue('fan', !data.control.fan)
+  }, [setControlValue, data.control.fan]);
 
   const refillWater = useCallback(() => {
+    if (isLocked) {
+      toast({
+        variant: "destructive",
+        title: "System Locked",
+        description: "Unlock the system to refill water.",
+      });
+      return;
+    }
+    if (data.sensors.waterLevel === 'HIGH') {
+        toast({
+            title: "Reservoir Full",
+            description: "Water level is already at maximum.",
+        });
+        return;
+    }
     if (!database) return;
     const waterLevelRef = ref(database, 'incubator/sensors/waterLevel');
     set(waterLevelRef, "HIGH");
-  }, []);
+     toast({
+        title: "Water Refilled",
+        description: "The water reservoir has been set to HIGH.",
+      });
+  }, [isLocked, toast, data.sensors.waterLevel]);
   
   const setEggType = useCallback((eggType: string) => {
+    if (isLocked) {
+      toast({
+        variant: "destructive",
+        title: "System Locked",
+        description: "Unlock the system to change egg type.",
+      });
+      return;
+    }
     setData(prev => ({...prev, eggType}));
-  }, []);
+  }, [isLocked, toast]);
 
-  const value = { data, toggleFan, emergencyStop, refillWater, setEggType };
+  const unlock = useCallback((pin: string) => {
+    return new Promise<boolean>((resolve) => {
+      if (pin === accessCode) {
+        setIsLocked(false);
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    });
+  }, [accessCode]);
+
+  const lock = useCallback(() => {
+    setIsLocked(true);
+    toast({
+      title: "System Locked",
+      description: "Controls are now secured.",
+    });
+  }, [toast]);
+
+  const value = { data, isLocked, toggleFan, refillWater, setEggType, unlock, lock, setAccessCode };
 
   return (
     <IncubatorContext.Provider value={value}>

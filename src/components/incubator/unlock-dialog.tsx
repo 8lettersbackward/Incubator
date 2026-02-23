@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 
 export default function UnlockDialog({ children }: { children: React.ReactNode }) {
-  const { isLocked, unlock } = useIncubator();
+  const { unlock } = useIncubator();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [pin, setPin] = useState("");
@@ -37,21 +37,18 @@ export default function UnlockDialog({ children }: { children: React.ReactNode }
         title: "Incorrect PIN",
         description: "Please try again.",
       });
+      setPin("");
     }
   };
-  
-  if (!isLocked) {
-      return <>{children}</>;
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Unlock System</DialogTitle>
+          <DialogTitle>Unlock Controls</DialogTitle>
           <DialogDescription>
-            Enter the 4-digit PIN to unlock the controls.
+            Enter the 4-digit PIN to access system controls.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -66,6 +63,7 @@ export default function UnlockDialog({ children }: { children: React.ReactNode }
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               className="col-span-3"
+              placeholder="****"
             />
           </div>
         </div>
