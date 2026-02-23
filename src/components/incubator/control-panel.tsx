@@ -13,7 +13,6 @@ import UnlockDialog from "./unlock-dialog";
 import { Button } from "../ui/button";
 import AccessCodeDialog from "./access-code-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import SystemStatus from "./system-status";
 
 export default function ControlPanel() {
   const { data, toggleFan, isLocked, lock, setEggType, setTargetTemperature, setTargetHumidity } = useIncubator();
@@ -29,9 +28,6 @@ export default function ControlPanel() {
     setHumidityTarget(data.control.targetHumidity);
   }, [data.control.targetHumidity]);
 
-
-  const tempIsSafe = data.alertSystem?.temperatureState === 'NORMAL';
-  const humidityIsSafe = data.alertSystem?.humidityState === 'NORMAL';
 
   return (
     <Card className="h-full overflow-hidden">
@@ -65,7 +61,7 @@ export default function ControlPanel() {
                     <Thermometer className="w-5 h-5 text-muted-foreground" />
                     <span>Temperature</span>
                 </Label>
-                <span className={cn("font-bold text-lg", !tempIsSafe && "text-destructive animate-pulse")}>
+                <span className="font-bold text-lg">
                     {data.sensors.temperature.toFixed(1)}°C
                 </span>
             </div>
@@ -90,7 +86,7 @@ export default function ControlPanel() {
                     <Droplets className="w-5 h-5 text-muted-foreground" />
                     <span>Humidity</span>
                 </Label>
-                <span className={cn("font-bold text-lg", !humidityIsSafe && "text-destructive animate-pulse")}>
+                <span className="font-bold text-lg">
                     {data.sensors.humidity.toFixed(1)}%
                 </span>
             </div>
@@ -108,9 +104,7 @@ export default function ControlPanel() {
                 <span className="text-sm font-medium w-16 text-right tabular-nums">{humidityTarget.toFixed(0)}%</span>
             </div>
           </div>
-          
-          <SystemStatus />
-          
+                    
           <Separator />
           
           <div className="flex items-center justify-between">

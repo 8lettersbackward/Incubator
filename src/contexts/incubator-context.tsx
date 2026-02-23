@@ -22,13 +22,6 @@ export interface IncubatorData {
     waterPercent: number;
     eggsTurned: boolean;
   };
-  alertSystem: {
-    status: string; // e.g., 'SYSTEM_OK', 'WARNING', 'CRITICAL'
-    temperatureState: string; // e.g., 'NORMAL', 'LOW', 'HIGH'
-    humidityState: string; // e.g., 'NORMAL', 'LOW', 'HIGH'
-    buzzer: boolean;
-    message: string;
-  };
   eggType: string;
 }
 
@@ -63,13 +56,6 @@ const initialData: IncubatorData = {
     waterPercent: 0,
     eggsTurned: false,
   },
-  alertSystem: {
-    status: 'SYSTEM_OK',
-    temperatureState: 'NORMAL',
-    humidityState: 'NORMAL',
-    buzzer: false,
-    message: 'Incubation Stable',
-  },
   eggType: 'Chicken',
 };
 
@@ -99,7 +85,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
             ...prev,
             control: { ...prev.control, ...dbData.control },
             sensors: { ...prev.sensors, ...dbData.sensors },
-            alertSystem: { ...prev.alertSystem, ...dbData.alertSystem },
         }));
       } else {
         const { eggType, ...rest } = initialData;
