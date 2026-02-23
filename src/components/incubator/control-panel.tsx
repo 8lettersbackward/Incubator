@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useIncubator } from "@/contexts/incubator-context";
-import { Fan, Thermometer, Droplets, Bell, LockIcon, KeyRound, Bird, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
+import { Fan, Thermometer, Droplets, LockIcon, KeyRound, Bird } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,6 @@ import UnlockDialog from "./unlock-dialog";
 import { Button } from "../ui/button";
 import AccessCodeDialog from "./access-code-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import StatusIndicator from "../shared/status-indicator";
 
 export default function ControlPanel() {
   const { data, toggleFan, isLocked, lock, setEggType, setTargetTemperature, setTargetHumidity } = useIncubator();
@@ -38,43 +37,6 @@ export default function ControlPanel() {
 
   const tempIsSafe = data.sensors.temperature >= tempSafeMin && data.sensors.temperature <= tempSafeMax;
   const humidityIsSafe = data.sensors.humidity >= humiditySafeMin && data.sensors.humidity <= humiditySafeMax;
-
-  const getSystemStatus = () => {
-    const { tempAlert, humidityAlert, balanceAlert } = data.status;
-    if (tempAlert !== 'OK' || humidityAlert !== 'OK') {
-      return {
-        level: 'CRITICAL',
-        message: 'Critical Alert',
-        description: 'Temp/Humidity out of safe range. Immediate action required.',
-        icon: <ShieldX className="w-6 h-6 text-destructive" />,
-        colorClass: 'text-destructive',
-        bgClass: 'bg-destructive/20',
-        pulseClass: 'animate-pulse',
-      };
-    }
-    if (balanceAlert !== 'OK') {
-      return {
-        level: 'WARNING',
-        message: 'Warning Alert',
-        description: 'Incubator balance requires attention.',
-        icon: <ShieldAlert className="w-6 h-6 text-yellow-400" />,
-        colorClass: 'text-yellow-400',
-        bgClass: 'bg-yellow-400/20',
-        pulseClass: 'animate-pulse [animation-duration:3s]',
-      };
-    }
-    return {
-      level: 'OK',
-      message: 'System OK',
-      description: 'All systems are operating within optimal range.',
-      icon: <ShieldCheck className="w-6 h-6 text-accent" />,
-      colorClass: 'text-accent',
-      bgClass: 'bg-accent/20',
-      pulseClass: '',
-    };
-  };
-
-  const systemStatus = getSystemStatus();
 
   return (
     <Card className="h-full overflow-hidden">
@@ -152,36 +114,6 @@ export default function ControlPanel() {
             </div>
           </div>
           
-          <Separator />
-
-          <div className="space-y-3">
-              <h4 className="text-sm font-medium text-foreground">System Status</h4>
-               <div className={cn(
-                  "flex items-start gap-4 p-3 rounded-lg",
-                  systemStatus.bgClass,
-                  systemStatus.pulseClass
-              )}>
-                  <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                      {systemStatus.icon}
-                  </div>
-                  <div className="flex-grow">
-                      <p className={cn("font-bold", systemStatus.colorClass)}>{systemStatus.message}</p>
-                      <p className="text-xs text-muted-foreground leading-tight">{systemStatus.description}</p>
-                  </div>
-              </div>
-              <div className="flex items-center justify-between text-sm pt-1">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                      <Bell className="w-4 h-4" />
-                      <span>Buzzer</span>
-                  </div>
-                  <StatusIndicator 
-                    label={data.status.buzzerActive && systemStatus.level === 'CRITICAL' ? "Active" : "Off"}
-                    isActive={data.status.buzzerActive && systemStatus.level === 'CRITICAL'}
-                    activeColor="bg-destructive"
-                  />
-              </div>
-          </div>
-
           <Separator />
           
           <div className="flex items-center justify-between">
