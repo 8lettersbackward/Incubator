@@ -26,13 +26,13 @@ export default function WaterManagement() {
         <CardDescription>Reservoir water level for humidity control.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2 pt-2">
-        <div className="flex items-center gap-4">
-          <Progress value={waterLevel} className="w-full h-3" />
-          <span className="text-xl font-bold text-primary">{waterLevel.toFixed(0)}%</span>
-        </div>
-        <div className="flex justify-between text-xs text-muted-foreground pt-1">
+        <Progress value={waterLevel} className="w-full h-3" />
+        <div className="flex justify-between text-xs text-muted-foreground">
           <span>Empty</span>
           <span>Full</span>
+        </div>
+        <div className="text-center text-2xl font-bold text-primary pt-2">
+          {waterLevel.toFixed(0)}%
         </div>
       </CardContent>
     </Card>
