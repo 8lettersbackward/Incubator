@@ -8,16 +8,21 @@ import { cn } from "@/lib/utils";
 
 const Egg = () => <div className="w-4 h-5 bg-orange-200/50 rounded-[50%/60%_60%_40%_40%] border border-orange-200/60" />;
 
-const EggTray = () => (
+const EggTray = ({ eggCount }: { eggCount: number }) => (
   <div className="grid grid-cols-10 gap-1 p-1 bg-black/20 rounded-md">
-    {Array.from({ length: 50 }).map((_, i) => (
-      <Egg key={i} />
+    {Array.from({ length: 56 }).map((_, i) => (
+      i < eggCount ? <Egg key={i} /> : <div key={i} className="w-4 h-5" />
     ))}
   </div>
 );
 
 export default function IncubatorVisualization() {
   const { data } = useIncubator();
+  const { numberOfEggs = 0 } = data;
+
+  const tray1Eggs = Math.min(numberOfEggs, 56);
+  const tray2Eggs = Math.max(0, numberOfEggs - 56);
+
 
   return (
     <Card className="h-full">
@@ -50,12 +55,12 @@ export default function IncubatorVisualization() {
           
           {/* Egg Trays */}
           <div className="w-full max-w-md space-y-2">
-            <EggTray />
-            <EggTray />
+            <EggTray eggCount={tray1Eggs} />
+            <EggTray eggCount={tray2Eggs} />
           </div>
 
           <div className="absolute bottom-2 right-4 text-xs font-mono text-muted-foreground">
-            EGG TYPE: {(data.eggType || "").toUpperCase()}
+            {`EGGS: ${numberOfEggs} / 112 | TYPE: ${(data.eggType || "").toUpperCase()}`}
           </div>
         </div>
       </CardContent>

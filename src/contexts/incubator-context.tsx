@@ -36,6 +36,7 @@ export interface IncubatorData {
   eggType: string;
   incubationDay: number;
   totalIncubationDays: number;
+  numberOfEggs: number;
 }
 
 interface IncubatorContextType {
@@ -58,6 +59,7 @@ interface IncubatorContextType {
   setIncubationDay: (day: number) => void;
   setTotalIncubationDays: (days: number) => void;
   resetIncubation: () => void;
+  setNumberOfEggs: (count: number) => void;
 }
 
 const EGG_INCUBATION_PERIODS: { [key: string]: number } = {
@@ -96,6 +98,7 @@ const initialData: IncubatorData = {
   eggType: 'Chicken',
   incubationDay: 1,
   totalIncubationDays: EGG_INCUBATION_PERIODS['Chicken'],
+  numberOfEggs: 56,
 };
 
 const IncubatorContext = createContext<IncubatorContextType | undefined>(undefined);
@@ -350,6 +353,28 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [isLocked, toast]);
 
+  const setNumberOfEggs = useCallback((count: number) => {
+    if (isLocked) {
+      toast({
+        variant: "destructive",
+        title: "System Locked",
+        description: "Unlock the system to change the number of eggs.",
+      });
+      return;
+    }
+    if (!database) return;
+    if (count < 1 || count > 112) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Egg Count",
+        description: "Number of eggs must be between 1 and 112.",
+      });
+      return;
+    }
+    const eggsRef = ref(database, 'incubator/numberOfEggs');
+    set(eggsRef, count);
+  }, [isLocked, toast]);
+
   const unlock = useCallback((pin: string) => {
     return new Promise<boolean>((resolve) => {
       if (pin === accessCode) {
@@ -369,7 +394,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [toast]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setIncubationDay, setTotalIncubationDays, resetIncubation };
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setIncubationDay, setTotalIncubationDays, resetIncubation, setNumberOfEggs };
 
   return (
     <IncubatorContext.Provider value={value}>

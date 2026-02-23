@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useIncubator } from "@/contexts/incubator-context";
-import { LockIcon, KeyRound, Bird, Thermometer, Droplets } from "lucide-react";
+import { LockIcon, KeyRound, Bird, Thermometer, Droplets, Egg, Minus, Plus } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import UnlockDialog from "./unlock-dialog";
@@ -12,10 +12,46 @@ import AccessCodeDialog from "./access-code-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import SystemStatus from "./system-status";
 import EnvironmentSlider from "./environment-slider";
+import { Input } from "../ui/input";
+import { useEffect, useState } from "react";
 
 export default function ControlPanel() {
-  const { data, isLocked, lock, setEggType, setSensorTemperature, setSensorHumidity } = useIncubator();
-  const { sensors, alertSystem } = data;
+  const { data, isLocked, lock, setEggType, setSensorTemperature, setSensorHumidity, setNumberOfEggs } = useIncubator();
+  const { sensors, alertSystem, numberOfEggs } = data;
+  const [eggInput, setEggInput] = useState(String(numberOfEggs || ''));
+
+  useEffect(() => {
+    if (numberOfEggs) {
+        setEggInput(String(numberOfEggs));
+    }
+  }, [numberOfEggs]);
+
+  const handleEggCountChange = (change: number) => {
+    const newCount = (numberOfEggs || 0) + change;
+    if (newCount >= 1 && newCount <= 112) {
+      if (setNumberOfEggs) {
+        setNumberOfEggs(newCount);
+      }
+    }
+  };
+
+  const handleEggInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setEggInput(e.target.value);
+  };
+
+  const handleEggInputBlur = () => {
+      let newCount = parseInt(eggInput, 10);
+      if (isNaN(newCount) || newCount < 1) {
+          newCount = 1;
+      } else if (newCount > 112) {
+          newCount = 112;
+      }
+      if (setNumberOfEggs) {
+        setNumberOfEggs(newCount);
+      }
+      setEggInput(String(newCount));
+  };
+
 
   const handleTempChange = (value: number[]) => {
     if (setSensorTemperature) {
@@ -86,6 +122,48 @@ export default function ControlPanel() {
               disabled={isLocked}
             />
           </div>
+          <Separator />
+
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2 font-medium">
+              <Egg className="w-5 h-5 text-primary" />
+              Number of Eggs
+            </Label>
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10"
+                onClick={() => handleEggCountChange(-1)}
+                disabled={isLocked || (numberOfEggs || 0) <= 1}
+              >
+                <Minus className="h-4 w-4" />
+                <span className="sr-only">Decrease egg count</span>
+              </Button>
+              <Input
+                type="number"
+                className="w-20 text-center font-bold text-lg h-10"
+                value={eggInput}
+                onChange={handleEggInput}
+                onBlur={handleEggInputBlur}
+                min={1}
+                max={112}
+                disabled={isLocked}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10"
+                onClick={() => handleEggCountChange(1)}
+                disabled={isLocked || (numberOfEggs || 0) >= 112}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="sr-only">Increase egg count</span>
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground text-center">Max capacity: 112 eggs</p>
+          </div>
+          
           <Separator />
 
           <SystemStatus alertSystem={data.alertSystem} />
