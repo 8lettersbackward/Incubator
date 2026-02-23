@@ -25,7 +25,9 @@ export interface IncubatorData {
     deviceOnline: boolean;
     wifiConnected: boolean;
     buzzerActive: boolean;
-    criticalTempAlert: boolean;
+    tempAlert: 'OK' | 'LOW' | 'HIGH';
+    humidityAlert: 'OK' | 'LOW' | 'HIGH';
+    balanceAlert: 'OK' | 'UNBALANCED';
   };
   eggType: string;
 }
@@ -63,7 +65,9 @@ const initialData: IncubatorData = {
     deviceOnline: false,
     wifiConnected: false,
     buzzerActive: false,
-    criticalTempAlert: false,
+    tempAlert: 'OK',
+    humidityAlert: 'OK',
+    balanceAlert: 'OK',
   },
   eggType: 'Chicken',
 };

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useIncubator } from "@/contexts/incubator-context";
-import { Fan, Thermometer, Droplets, Bell, LockIcon, KeyRound, Bird } from "lucide-react";
+import { Fan, Thermometer, Droplets, Bell, LockIcon, KeyRound, Bird, AlertTriangle } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import StatusIndicator from "../shared/status-indicator";
@@ -14,6 +14,7 @@ import UnlockDialog from "./unlock-dialog";
 import { Button } from "../ui/button";
 import AccessCodeDialog from "./access-code-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "../ui/badge";
 
 export default function ControlPanel() {
   const { data, toggleFan, isLocked, lock, setEggType, setTargetTemperature, setTargetHumidity } = useIncubator();
@@ -127,11 +128,37 @@ export default function ControlPanel() {
                   <StatusIndicator label={data.status.buzzerActive ? "Active" : "Off"} isActive={data.status.buzzerActive} activeColor="bg-destructive" />
               </div>
               <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                      <Thermometer className="w-4 h-4" />
-                      <span>Temp. Alert</span>
-                  </div>
-                  <StatusIndicator label={data.status.criticalTempAlert ? "CRITICAL" : "OK"} isActive={data.status.criticalTempAlert} activeColor="bg-destructive" />
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Thermometer className="w-4 h-4" />
+                    <span>Temp. Alert</span>
+                </div>
+                {data.status.tempAlert !== 'OK' ? (
+                    <Badge variant="destructive">{data.status.tempAlert}</Badge>
+                ) : (
+                    <span className="text-sm text-muted-foreground">OK</span>
+                )}
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Droplets className="w-4 h-4" />
+                    <span>Humidity Alert</span>
+                </div>
+                {data.status.humidityAlert !== 'OK' ? (
+                    <Badge variant="destructive">{data.status.humidityAlert}</Badge>
+                ) : (
+                    <span className="text-sm text-muted-foreground">OK</span>
+                )}
+              </div>
+               <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Balance Alert</span>
+                </div>
+                {data.status.balanceAlert !== 'OK' ? (
+                    <Badge variant="destructive">{data.status.balanceAlert}</Badge>
+                ) : (
+                    <span className="text-sm text-muted-foreground">OK</span>
+                )}
               </div>
           </div>
 
