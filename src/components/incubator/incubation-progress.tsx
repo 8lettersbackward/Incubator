@@ -9,8 +9,8 @@ import { CalendarDays, Minus, Plus } from "lucide-react";
 const presets = [14, 18, 21, 24, 28, 35];
 
 export default function IncubationProgress() {
-  const { data, totalIncubationDays, setIncubationDay, setTotalIncubationDays, isLocked } = useIncubator();
-  const { incubationDay, eggType } = data;
+  const { data, setIncubationDay, setTotalIncubationDays, isLocked } = useIncubator();
+  const { incubationDay, totalIncubationDays, eggType } = data;
 
   const progressPercentage = (incubationDay / totalIncubationDays) * 100;
   const remainingDays = totalIncubationDays - incubationDay;

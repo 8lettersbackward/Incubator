@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { database } from '@/firebase/config';
-import { ref, onValue, set } from 'firebase/database';
+import { ref, onValue, set, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
 
 // Data types
@@ -26,12 +26,12 @@ export interface IncubatorData {
   };
   eggType: string;
   incubationDay: number;
+  totalIncubationDays: number;
 }
 
 interface IncubatorContextType {
   data: IncubatorData;
   isLocked: boolean;
-  totalIncubationDays: number;
   toggleFan: () => void;
   toggleHeater: () => void;
   toggleMotor: () => void;
@@ -76,6 +76,7 @@ const initialData: IncubatorData = {
   },
   eggType: 'Chicken',
   incubationDay: 1,
+  totalIncubationDays: EGG_INCUBATION_PERIODS['Chicken'],
 };
 
 const IncubatorContext = createContext<IncubatorContextType | undefined>(undefined);
@@ -85,7 +86,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const [isLocked, setIsLocked] = useState(true);
   const [accessCode, setAccessCode] = useState('1234'); // Default PIN
   const { toast } = useToast();
-  const [totalIncubationDays, setTotalIncubationDaysState] = useState(EGG_INCUBATION_PERIODS[initialData.eggType]);
 
   useEffect(() => {
     if (!database) {
@@ -100,23 +100,13 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     const incubatorRef = ref(database, 'incubator');
     const unsubscribe = onValue(incubatorRef, (snapshot) => {
       if (snapshot.exists()) {
-        const dbData = snapshot.val();
-        setData(prev => ({
-            ...prev,
-            control: { ...prev.control, ...dbData.control },
-            sensors: { ...prev.sensors, ...dbData.sensors },
-        }));
+        setData(snapshot.val());
       } else {
-        const { eggType, incubationDay, ...rest } = initialData;
-        set(incubatorRef, rest);
+        set(incubatorRef, initialData);
       }
     });
     return () => unsubscribe();
   }, [toast]);
-  
-  useEffect(() => {
-    setTotalIncubationDaysState(EGG_INCUBATION_PERIODS[data.eggType] || 21);
-  }, [data.eggType]);
 
   const setControlValue = useCallback((key: string, value: any) => {
     if (isLocked) {
@@ -200,7 +190,14 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       });
       return;
     }
-    setData(prev => ({...prev, eggType, incubationDay: 1}));
+    if (!database) return;
+    const newTotalDays = EGG_INCUBATION_PERIODS[eggType] || 21;
+    const incubatorRef = ref(database, 'incubator');
+    update(incubatorRef, {
+      eggType: eggType,
+      incubationDay: 1,
+      totalIncubationDays: newTotalDays
+    });
   }, [isLocked, toast]);
 
   const setIncubationDay = useCallback((day: number) => {
@@ -212,10 +209,12 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       });
       return;
     }
-    if (day >= 1 && day <= totalIncubationDays) {
-      setData(prev => ({ ...prev, incubationDay: day }));
+    if (day >= 1 && day <= data.totalIncubationDays) {
+      if (!database) return;
+      const dayRef = ref(database, 'incubator/incubationDay');
+      set(dayRef, day);
     }
-  }, [isLocked, toast, totalIncubationDays]);
+  }, [isLocked, toast, data.totalIncubationDays]);
 
   const setTotalIncubationDays = (days: number) => {
     if (isLocked) {
@@ -226,8 +225,12 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       });
       return;
     }
-    setTotalIncubationDaysState(days);
-    setData(prev => ({ ...prev, incubationDay: 1 }));
+    if (!database) return;
+    const incubatorRef = ref(database, 'incubator');
+    update(incubatorRef, {
+      totalIncubationDays: days,
+      incubationDay: 1
+    });
   };
 
   const unlock = useCallback((pin: string) => {
@@ -249,7 +252,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [toast]);
 
-  const value = { data, isLocked, totalIncubationDays, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setIncubationDay, setTotalIncubationDays };
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setIncubationDay, setTotalIncubationDays };
 
   return (
     <IncubatorContext.Provider value={value}>
