@@ -124,6 +124,69 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, [toast]);
 
+  useEffect(() => {
+    if (!database || !data.sensors || !data.alertSystem) return;
+
+    const { temperature, humidity } = data.sensors;
+    
+    const newAlert: AlertSystem = {
+      status: 'SYSTEM_OK',
+      temperatureState: 'NORMAL',
+      humidityState: 'NORMAL',
+      buzzer: false,
+      message: 'Incubation Stable',
+    };
+
+    // Determine temperature state
+    if (temperature < 35) {
+      newAlert.status = 'CRITICAL';
+      newAlert.temperatureState = 'LOW';
+    } else if (temperature < 36) {
+      newAlert.status = 'WARNING';
+      newAlert.temperatureState = 'LOW';
+    } else if (temperature > 40) {
+      newAlert.status = 'CRITICAL';
+      newAlert.temperatureState = 'HIGH';
+    } else if (temperature > 39) {
+      newAlert.status = 'WARNING';
+      newAlert.temperatureState = 'HIGH';
+    }
+
+    // Determine humidity state, potentially escalating status to CRITICAL
+    if (humidity < 40) {
+      newAlert.status = 'CRITICAL';
+      newAlert.humidityState = 'LOW';
+    } else if (humidity < 45) {
+      if (newAlert.status !== 'CRITICAL') newAlert.status = 'WARNING';
+      newAlert.humidityState = 'LOW';
+    } else if (humidity > 70) {
+      newAlert.status = 'CRITICAL';
+      newAlert.humidityState = 'HIGH';
+    } else if (humidity > 65) {
+      if (newAlert.status !== 'CRITICAL') newAlert.status = 'WARNING';
+      newAlert.humidityState = 'HIGH';
+    }
+
+    // Set message and buzzer based on final status
+    if (newAlert.status === 'CRITICAL') {
+      newAlert.buzzer = true;
+      const tempMsg = newAlert.temperatureState !== 'NORMAL' ? `Temp is ${newAlert.temperatureState.toLowerCase()}` : '';
+      const humMsg = newAlert.humidityState !== 'NORMAL' ? `Humidity is ${newAlert.humidityState.toLowerCase()}` : '';
+      newAlert.message = `CRITICAL: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}`;
+    } else if (newAlert.status === 'WARNING') {
+      newAlert.buzzer = false;
+      const tempMsg = newAlert.temperatureState !== 'NORMAL' ? `Temp is ${newAlert.temperatureState.toLowerCase()}` : '';
+      const humMsg = newAlert.humidityState !== 'NORMAL' ? `Humidity is ${newAlert.humidityState.toLowerCase()}` : '';
+      newAlert.message = `Warning: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}`;
+    }
+
+    // Only update Firebase if the alert status has changed to prevent loops
+    if (JSON.stringify(newAlert) !== JSON.stringify(data.alertSystem)) {
+      const alertSystemRef = ref(database, 'incubator/alertSystem');
+      set(alertSystemRef, newAlert);
+    }
+  }, [data.sensors, data.alertSystem, database]);
+
   const setControlValue = useCallback((key: string, value: any) => {
     if (isLocked) {
       toast({
