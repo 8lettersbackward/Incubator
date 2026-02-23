@@ -1,5 +1,5 @@
-import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getDatabase } from 'firebase/database';
+import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
+import { getDatabase, type Database } from 'firebase/database';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,8 +11,16 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const database = getDatabase(app);
+// Check if the databaseURL is properly configured to avoid crashes.
+const isFirebaseConfigured = firebaseConfig.databaseURL && firebaseConfig.databaseURL.startsWith('https://');
+
+let app: FirebaseApp | null = null;
+let database: Database | null = null;
+
+// Only initialize Firebase if the configuration is valid.
+if (isFirebaseConfigured) {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    database = getDatabase(app);
+}
 
 export { app, database };

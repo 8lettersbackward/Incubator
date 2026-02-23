@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { database } from '@/firebase/config';
 import { ref, onValue, set } from 'firebase/database';
+import { useToast } from '@/hooks/use-toast';
 
 // Data types
 export interface IncubatorData {
@@ -71,8 +72,10 @@ const IncubatorContext = createContext<IncubatorContextType | undefined>(undefin
 export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState<IncubatorData>(initialData);
   const inactivityTimerRef = useRef<NodeJS.Timeout>();
+  const { toast } = useToast();
 
   const lock = useCallback(() => {
+    if (!database) return;
     const systemLockedRef = ref(database, 'incubator/status/systemLocked');
     set(systemLockedRef, true);
     if (inactivityTimerRef.current) {
@@ -91,6 +94,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   }, [lock, data.status.systemLocked]);
   
   const unlock = useCallback(async (pin: string): Promise<boolean> => {
+    if (!database) return false;
     if (pin === data.control.accessCode) {
         const systemLockedRef = ref(database, 'incubator/status/systemLocked');
         await set(systemLockedRef, false);
@@ -101,6 +105,15 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   }, [data.control.accessCode, resetInactivityTimer]);
 
   useEffect(() => {
+    if (!database) {
+      toast({
+        variant: "destructive",
+        title: "Firebase Not Configured",
+        description: "Please provide your Firebase credentials in the .env.local file to connect to the database.",
+        duration: Infinity,
+      });
+      return;
+    }
     const incubatorRef = ref(database, 'incubator');
     const unsubscribe = onValue(incubatorRef, (snapshot) => {
       if (snapshot.exists()) {
@@ -121,7 +134,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     // Cleanup timer on component unmount
@@ -133,7 +146,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const setControlValue = useCallback((key: string, value: any) => {
-    if (data.status.systemLocked) return;
+    if (data.status.systemLocked || !database) return;
     const controlRef = ref(database, `incubator/control/${key}`);
     set(controlRef, value);
     resetInactivityTimer();
@@ -144,17 +157,19 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const toggleHumidityControl = useCallback(() => setControlValue('humidityControl', !data.control.humidityControl), [setControlValue, data.control.humidityControl]);
 
   const manualTurn = useCallback(() => {
-    if (data.status.systemLocked) return;
+    if (data.status.systemLocked || !database) return;
     const motorRef = ref(database, 'incubator/control/motor');
     set(motorRef, true);
     setTimeout(() => {
-      set(motorRef, false);
+      if (database) {
+        set(motorRef, false);
+      }
     }, 5000); // Motor runs for 5s then state is reset
     resetInactivityTimer();
   }, [data.status.systemLocked, resetInactivityTimer]);
 
   const emergencyStop = useCallback(() => {
-    if (data.status.systemLocked) return;
+    if (data.status.systemLocked || !database) return;
     const controlRef = ref(database, 'incubator/control');
     // Keep access code, turn off all controls
     set(controlRef, {
@@ -168,13 +183,14 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   }, [data.control, data.status.systemLocked, resetInactivityTimer]);
 
   const refillWater = useCallback(() => {
+    if (!database) return;
     // This action is not protected by the lock
     const waterLevelRef = ref(database, 'incubator/sensors/waterLevel');
     set(waterLevelRef, "HIGH");
   }, []);
   
   const setAccessCode = useCallback((newCode: string) => {
-    if(data.status.systemLocked) return;
+    if(data.status.systemLocked || !database) return;
     if (newCode.length === 4 && /^\d+$/.test(newCode)) { // Basic validation
       const accessCodeRef = ref(database, 'incubator/control/accessCode');
       set(accessCodeRef, newCode);
