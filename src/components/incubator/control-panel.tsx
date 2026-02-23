@@ -79,7 +79,7 @@ export default function ControlPanel() {
                     disabled={isLocked}
                     className="flex-1"
                 />
-                <span className="text-sm font-medium w-16 text-right tabular-nums">{tempTarget.toFixed(1)}°C</span>
+                <span className="text-sm font-medium w-24 text-right tabular-nums">Target: {tempTarget.toFixed(1)}°C</span>
             </div>
           </div>
           
@@ -104,7 +104,7 @@ export default function ControlPanel() {
                     disabled={isLocked}
                     className="flex-1"
                 />
-                <span className="text-sm font-medium w-16 text-right tabular-nums">{humidityTarget.toFixed(0)}%</span>
+                <span className="text-sm font-medium w-24 text-right tabular-nums">Target: {humidityTarget.toFixed(0)}%</span>
             </div>
           </div>
                     
