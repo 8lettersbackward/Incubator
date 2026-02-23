@@ -5,8 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useIncubator } from "@/contexts/incubator-context";
-import { Lock, Thermometer, Wind, RotateCw, OctagonAlert, BrainCircuit, X, Delete } from "lucide-react";
+import { Lock, Thermometer, Wind, RotateCw, OctagonAlert, BrainCircuit, X, Delete, Egg } from "lucide-react";
 import AiGuidanceDialog from "./ai-guidance-dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -93,7 +100,7 @@ const LockedOverlay = () => {
 };
 
 export default function ControlPanel() {
-  const { data, isLocked, toggleHeater, toggleFan, manualTurn, emergencyStop, resetInactivityTimer } = useIncubator();
+  const { data, isLocked, toggleHeater, toggleFan, manualTurn, emergencyStop, resetInactivityTimer, setEggType } = useIncubator();
 
   const handleInteraction = (action: () => void) => {
     if (!isLocked) {
@@ -101,6 +108,11 @@ export default function ControlPanel() {
         resetInactivityTimer();
     }
   };
+  
+  const handleEggTypeChange = (eggType: string) => {
+    setEggType(eggType);
+  };
+
 
   return (
     <Card className="relative h-full">
@@ -111,6 +123,29 @@ export default function ControlPanel() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
+          <div className="flex items-center justify-between p-3 rounded-md border border-transparent hover:border-border transition-colors">
+            <Label htmlFor="egg-type-select" className="flex items-center gap-2 cursor-pointer">
+              <Egg className="w-5 h-5 text-primary" />
+              Egg Type
+            </Label>
+            <Select
+              value={data.eggType}
+              onValueChange={handleEggTypeChange}
+              disabled={isLocked}
+            >
+              <SelectTrigger id="egg-type-select" className="w-[150px]">
+                <SelectValue placeholder="Select egg type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Chicken">Chicken</SelectItem>
+                <SelectItem value="Duck">Duck</SelectItem>
+                <SelectItem value="Quail">Quail</SelectItem>
+                <SelectItem value="Goose">Goose</SelectItem>
+                <SelectItem value="Turkey">Turkey</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center justify-between p-3 rounded-md border border-transparent hover:border-border transition-colors">
             <Label htmlFor="heater-toggle" className="flex items-center gap-2 cursor-pointer">
               <Thermometer className="w-5 h-5 text-primary" />

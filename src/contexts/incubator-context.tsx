@@ -40,6 +40,7 @@ interface IncubatorContextType {
   emergencyStop: () => void;
   refillWater: () => void;
   setAccessCode: (newCode: string) => void;
+  setEggType: (eggType: string) => void;
 }
 
 // Initial State
@@ -198,7 +199,12 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [data.status.systemLocked, resetInactivityTimer]);
 
-  const value = { data, isLocked: data.status.systemLocked, unlock, resetInactivityTimer, toggleHeater, toggleFan, manualTurn, emergencyStop, refillWater, toggleHumidityControl, setAccessCode };
+  const setEggType = useCallback((eggType: string) => {
+    setData(prev => ({...prev, eggType}));
+    resetInactivityTimer();
+  }, [resetInactivityTimer]);
+
+  const value = { data, isLocked: data.status.systemLocked, unlock, resetInactivityTimer, toggleHeater, toggleFan, manualTurn, emergencyStop, refillWater, toggleHumidityControl, setAccessCode, setEggType };
 
   return (
     <IncubatorContext.Provider value={value}>
