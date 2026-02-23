@@ -14,8 +14,21 @@ import SystemStatus from "./system-status";
 import EnvironmentSlider from "./environment-slider";
 
 export default function ControlPanel() {
-  const { data, isLocked, lock, setEggType } = useIncubator();
+  const { data, isLocked, lock, setEggType, setSensorTemperature, setSensorHumidity } = useIncubator();
   const { sensors, alertSystem } = data;
+
+  const handleTempChange = (value: number[]) => {
+    if (setSensorTemperature) {
+      setSensorTemperature(value[0]);
+    }
+  };
+
+  const handleHumidityChange = (value: number[]) => {
+    if (setSensorHumidity) {
+      setSensorHumidity(value[0]);
+    }
+  };
+
 
   return (
     <Card className="h-full overflow-hidden">
@@ -50,10 +63,13 @@ export default function ControlPanel() {
               value={sensors.temperature}
               min={30}
               max={45}
+              step={0.1}
               safeMin={37.0}
               safeMax={38.0}
               unit="°C"
               isSafe={alertSystem.temperatureState === 'NORMAL'}
+              onValueChange={handleTempChange}
+              disabled={isLocked}
             />
             <EnvironmentSlider
               label="Humidity"
@@ -61,10 +77,13 @@ export default function ControlPanel() {
               value={sensors.humidity}
               min={20}
               max={80}
+              step={1}
               safeMin={40}
               safeMax={60}
               unit="%"
               isSafe={alertSystem.humidityState === 'NORMAL'}
+              onValueChange={handleHumidityChange}
+              disabled={isLocked}
             />
           </div>
           <Separator />

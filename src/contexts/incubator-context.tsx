@@ -53,6 +53,8 @@ interface IncubatorContextType {
   setAccessCode: (pin: string) => void;
   setTargetTemperature: (temp: number) => void;
   setTargetHumidity: (humidity: number) => void;
+  setSensorTemperature: (temp: number) => void;
+  setSensorHumidity: (humidity: number) => void;
   setIncubationDay: (day: number) => void;
   setTotalIncubationDays: (days: number) => void;
 }
@@ -129,7 +131,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
 
     const { temperature, humidity } = data.sensors;
     
-    // Fixed optimal reference values
     const OPTIMAL_TEMP_NORMAL_MIN = 37.0;
     const OPTIMAL_TEMP_NORMAL_MAX = 38.0;
     const OPTIMAL_TEMP_CRITICAL_LOW = 36.5;
@@ -148,38 +149,22 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       message: 'System stable. Optimal conditions.',
     };
 
-    // Temperature check
-    if (temperature < OPTIMAL_TEMP_CRITICAL_LOW) {
+    if (temperature < OPTIMAL_TEMP_CRITICAL_LOW || temperature > OPTIMAL_TEMP_CRITICAL_HIGH) {
       newAlert.status = 'CRITICAL';
-      newAlert.temperatureState = 'LOW';
-    } else if (temperature < OPTIMAL_TEMP_NORMAL_MIN) {
+      newAlert.temperatureState = temperature < OPTIMAL_TEMP_CRITICAL_LOW ? 'LOW' : 'HIGH';
+    } else if (temperature < OPTIMAL_TEMP_NORMAL_MIN || temperature > OPTIMAL_TEMP_NORMAL_MAX) {
       newAlert.status = 'WARNING';
-      newAlert.temperatureState = 'LOW';
-    } else if (temperature > OPTIMAL_TEMP_CRITICAL_HIGH) {
-      newAlert.status = 'CRITICAL';
-      newAlert.temperatureState = 'HIGH';
-    } else if (temperature > OPTIMAL_TEMP_NORMAL_MAX) {
-      newAlert.status = 'WARNING';
-      newAlert.temperatureState = 'HIGH';
+      newAlert.temperatureState = temperature < OPTIMAL_TEMP_NORMAL_MIN ? 'LOW' : 'HIGH';
     }
 
-    // Humidity check, potentially escalating status
-    if (humidity < OPTIMAL_HUMIDITY_WARNING_LOW) {
+    if (humidity < OPTIMAL_HUMIDITY_WARNING_LOW || humidity > OPTIMAL_HUMIDITY_WARNING_HIGH) {
       newAlert.status = 'CRITICAL';
-      newAlert.humidityState = 'LOW';
-    } else if (humidity < OPTIMAL_HUMIDITY_NORMAL_MIN) {
+      newAlert.humidityState = humidity < OPTIMAL_HUMIDITY_WARNING_LOW ? 'LOW' : 'HIGH';
+    } else if (humidity < OPTIMAL_HUMIDITY_NORMAL_MIN || humidity > OPTIMAL_HUMIDITY_NORMAL_MAX) {
       if (newAlert.status !== 'CRITICAL') newAlert.status = 'WARNING';
-      newAlert.humidityState = 'LOW';
-    } else if (humidity > OPTIMAL_HUMIDITY_WARNING_HIGH) {
-      newAlert.status = 'CRITICAL';
-      newAlert.humidityState = 'HIGH';
-    } else if (humidity > OPTIMAL_HUMIDITY_NORMAL_MAX) {
-      if (newAlert.status !== 'CRITICAL') newAlert.status = 'WARNING';
-      newAlert.humidityState = 'HIGH';
+      newAlert.humidityState = humidity < OPTIMAL_HUMIDITY_NORMAL_MIN ? 'LOW' : 'HIGH';
     }
 
-
-    // Set message and buzzer based on final status
     if (newAlert.status === 'CRITICAL') {
       newAlert.buzzer = true;
       const tempMsg = newAlert.temperatureState !== 'NORMAL' ? `Temp is ${newAlert.temperatureState.toLowerCase()}` : '';
@@ -192,7 +177,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       newAlert.message = `Warning: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}. Conditions are suboptimal.`;
     }
 
-    // Only update Firebase if the alert status has changed to prevent loops
     if (JSON.stringify(newAlert) !== JSON.stringify(data.alertSystem)) {
       const alertSystemRef = ref(database, 'incubator/alertSystem');
       set(alertSystemRef, newAlert);
@@ -213,6 +197,29 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     set(controlRef, value);
     return true;
   }, [isLocked, toast]);
+  
+  const setSensorValue = useCallback((key: string, value: any) => {
+    if (isLocked) {
+      toast({
+        variant: "destructive",
+        title: "System Locked",
+        description: "Unlock the system to make changes.",
+      });
+      return false;
+    }
+    if (!database) return false;
+    const sensorRef = ref(database, `incubator/sensors/${key}`);
+    set(sensorRef, value);
+    return true;
+  }, [isLocked, toast]);
+
+  const setSensorTemperature = useCallback((temp: number) => {
+    setSensorValue('temperature', temp);
+  }, [setSensorValue]);
+
+  const setSensorHumidity = useCallback((humidity: number) => {
+    setSensorValue('humidity', humidity);
+  }, [setSensorValue]);
 
   const toggleFan = useCallback(() => {
     setControlValue('fan', !data.control.fan)
@@ -343,7 +350,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [toast]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setIncubationDay, setTotalIncubationDays };
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setIncubationDay, setTotalIncubationDays };
 
   return (
     <IncubatorContext.Provider value={value}>
