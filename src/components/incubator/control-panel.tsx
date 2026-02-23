@@ -13,6 +13,7 @@ import UnlockDialog from "./unlock-dialog";
 import { Button } from "../ui/button";
 import AccessCodeDialog from "./access-code-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SystemStatus from "./system-status";
 
 export default function ControlPanel() {
   const { data, toggleFan, isLocked, lock, setEggType, setTargetTemperature, setTargetHumidity } = useIncubator();
@@ -113,6 +114,8 @@ export default function ControlPanel() {
                 <span className="text-sm font-medium w-16 text-right tabular-nums">{humidityTarget.toFixed(0)}%</span>
             </div>
           </div>
+          
+          <SystemStatus />
           
           <Separator />
           
