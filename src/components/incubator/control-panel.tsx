@@ -175,9 +175,9 @@ export default function ControlPanel() {
                       <span>Buzzer</span>
                   </div>
                   <StatusIndicator 
-                    label={data.status.buzzerActive ? "Active" : "Off"} 
-                    isActive={data.status.buzzerActive} 
-                    activeColor={systemStatus.level === 'CRITICAL' ? "bg-destructive" : "bg-yellow-400"} 
+                    label={data.status.buzzerActive && systemStatus.level === 'CRITICAL' ? "Active" : "Off"}
+                    isActive={data.status.buzzerActive && systemStatus.level === 'CRITICAL'}
+                    activeColor="bg-destructive"
                   />
               </div>
           </div>
