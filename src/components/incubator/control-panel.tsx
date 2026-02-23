@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useIncubator } from "@/contexts/incubator-context";
-import { Fan, Thermometer, Droplets, LockIcon, KeyRound, Bird } from "lucide-react";
-import { Slider } from "@/components/ui/slider";
+import { LockIcon, KeyRound, Bird } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import UnlockDialog from "./unlock-dialog";
@@ -16,19 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import SystemStatus from "./system-status";
 
 export default function ControlPanel() {
-  const { data, toggleFan, isLocked, lock, setEggType, setTargetTemperature, setTargetHumidity } = useIncubator();
-
-  const [tempTarget, setTempTarget] = useState(data.control.targetTemperature);
-  const [humidityTarget, setHumidityTarget] = useState(data.control.targetHumidity);
-
-  useEffect(() => {
-    setTempTarget(data.control.targetTemperature);
-  }, [data.control.targetTemperature]);
-
-  useEffect(() => {
-    setHumidityTarget(data.control.targetHumidity);
-  }, [data.control.targetHumidity]);
-
+  const { data, isLocked, lock, setEggType } = useIncubator();
 
   return (
     <Card className="h-full overflow-hidden">
@@ -58,66 +43,6 @@ export default function ControlPanel() {
         >
           <SystemStatus alertSystem={data.alertSystem} />
           
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-                <Label className="flex items-center gap-2">
-                    <Thermometer className="w-5 h-5 text-muted-foreground" />
-                    <span>Temperature</span>
-                </Label>
-                <span className="font-bold text-lg">
-                    {data.sensors.temperature.toFixed(1)}°C
-                </span>
-            </div>
-            <div className="flex items-center gap-2">
-                <Slider
-                    value={[tempTarget]}
-                    onValueChange={(value) => setTempTarget(value[0])}
-                    onValueCommit={(value) => setTargetTemperature(value[0])}
-                    min={30}
-                    max={45}
-                    step={0.1}
-                    disabled={isLocked}
-                    className="flex-1"
-                />
-                <span className="text-sm font-medium w-24 text-right tabular-nums">Target: {tempTarget.toFixed(1)}°C</span>
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-                <Label className="flex items-center gap-2">
-                    <Droplets className="w-5 h-5 text-muted-foreground" />
-                    <span>Humidity</span>
-                </Label>
-                <span className="font-bold text-lg">
-                    {data.sensors.humidity.toFixed(1)}%
-                </span>
-            </div>
-            <div className="flex items-center gap-2">
-                <Slider
-                    value={[humidityTarget]}
-                    onValueChange={(value) => setHumidityTarget(value[0])}
-                    onValueCommit={(value) => setTargetHumidity(value[0])}
-                    min={40}
-                    max={80}
-                    step={1}
-                    disabled={isLocked}
-                    className="flex-1"
-                />
-                <span className="text-sm font-medium w-24 text-right tabular-nums">Target: {humidityTarget.toFixed(0)}%</span>
-            </div>
-          </div>
-                    
-          <Separator />
-          
-          <div className="flex items-center justify-between">
-              <Label htmlFor="fan-switch" className="flex items-center gap-2 font-medium">
-                  <Fan className="w-5 h-5 text-primary" />
-                  Ventilation Fan
-              </Label>
-              <Switch id="fan-switch" checked={data.control.fan} onCheckedChange={toggleFan} disabled={isLocked} />
-          </div>
-
           <div className="flex items-center justify-between">
             <Label className="flex items-center gap-2 font-medium">
               <Bird className="w-5 h-5 text-primary" />
