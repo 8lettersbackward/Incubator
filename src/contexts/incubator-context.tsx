@@ -169,11 +169,11 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   }, [data.control, data.status.systemLocked, resetInactivityTimer, lock]);
 
   const refillWater = useCallback(() => {
-    if (!database) return;
+    if (data.status.systemLocked || !database) return;
     const waterLevelRef = ref(database, 'incubator/sensors/waterLevel');
     set(waterLevelRef, "HIGH");
     resetInactivityTimer();
-  }, [resetInactivityTimer]);
+  }, [data.status.systemLocked, resetInactivityTimer]);
   
   const setAccessCode = useCallback((newCode: string) => {
     if(data.status.systemLocked || !database) return;

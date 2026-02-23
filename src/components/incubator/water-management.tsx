@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
 export default function WaterManagement() {
-  const { data, refillWater } = useIncubator();
+  const { data, refillWater, isLocked } = useIncubator();
   const waterLevel = data.sensors.waterLevel.toUpperCase();
 
   const getWaterPercentage = (level: string) => {
@@ -44,7 +44,7 @@ export default function WaterManagement() {
         </div>
         <p className="text-center text-2xl font-bold text-foreground">{percentage}%</p>
         <div className="pt-2">
-          <Button onClick={refillWater} variant="outline" disabled={waterLevel === 'HIGH'} className="w-full">
+          <Button onClick={refillWater} variant="outline" disabled={waterLevel === 'HIGH' || isLocked} className="w-full">
               <Plus className="mr-2 h-4 w-4" />
               Refill
           </Button>
