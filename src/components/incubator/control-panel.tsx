@@ -1,94 +1,97 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
-import { useIncubator } from "@/contexts/incubator-context";
-import { Thermometer, Droplets, BellRing, AlertTriangle } from "lucide-react";
-import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useIncubator } from "@/contexts/incubator-context";
+import { Fan, Lightbulb, Repeat, AlertTriangle, Cog, Bot } from "lucide-react";
+import UnlockDialog from "./unlock-dialog";
+import AccessCodeDialog from "./access-code-dialog";
+import AiGuidanceDialog from "./ai-guidance-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const MonitorSlider = ({ label, value, unit, icon, min, max, step, optimalMin, optimalMax }) => {
-    return (
-        <div className="space-y-2">
-            <div className="flex justify-between items-center mb-1">
-                <Label className="flex items-center gap-2 text-base text-muted-foreground">
-                    {icon}
-                    {label}
-                </Label>
-                <span className="font-bold text-xl text-foreground">{value.toFixed(1)}{unit}</span>
-            </div>
-            <Slider
-                value={[value]}
-                min={min}
-                max={max}
-                step={step}
-                disabled
-            />
-            <div className="relative h-1 w-full">
-                <div 
-                    className="absolute h-1 rounded-full bg-primary/50"
-                    style={{
-                        left: `${((optimalMin - min) / (max - min)) * 100}%`,
-                        width: `${((optimalMax - optimalMin) / (max - min)) * 100}%`
-                    }}
-                >
-                </div>
-            </div>
-        </div>
-    );
-};
 
 export default function ControlPanel() {
-  const { data } = useIncubator();
+  const { data, isLocked, toggleHeater, toggleFan, manualTurn, emergencyStop, setEggType } = useIncubator();
+
+  const eggTypes = ["Chicken", "Quail", "Duck", "Turkey", "Goose"];
 
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Incubator Status</CardTitle>
-        <CardDescription>Real-time environmental monitoring.</CardDescription>
+        <CardTitle>Control Panel</CardTitle>
+        <CardDescription>Manual controls and system settings</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-8 pt-4">
-        <MonitorSlider 
-            label="Temperature"
-            icon={<Thermometer className="h-5 w-5 text-primary" />}
-            value={data.sensors.temperature}
-            unit="°C"
-            min={30}
-            max={45}
-            step={0.1}
-            optimalMin={37.2}
-            optimalMax={38.9}
-        />
-        <MonitorSlider 
-            label="Humidity"
-            icon={<Droplets className="h-5 w-5 text-primary" />}
-            value={data.sensors.humidity}
-            unit="%"
-            min={40}
-            max={90}
-            step={1}
-            optimalMin={55}
-            optimalMax={65}
-        />
-        <div className="space-y-3">
-            <Label className="text-base text-muted-foreground">System Alerts</Label>
-            <div className="space-y-2">
-                {data.status.criticalTemperatureAlert && (
-                    <Alert variant="destructive">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Critical Temperature Alert</AlertTitle>
-                    </Alert>
-                )}
-                {data.status.buzzerActive && (
-                    <Alert>
-                        <BellRing className="h-4 w-4" />
-                        <AlertTitle>Buzzer Active</AlertTitle>
-                    </Alert>
-                )}
-                {(!data.status.criticalTemperatureAlert && !data.status.buzzerActive) && (
-                    <p className="text-sm text-muted-foreground">No active alerts.</p>
-                )}
+      <CardContent className="space-y-6 pt-4">
+        <div className="space-y-2">
+          <Label htmlFor="egg-type-select">Egg Type</Label>
+          <Select value={data.eggType} onValueChange={setEggType} disabled={isLocked}>
+            <SelectTrigger id="egg-type-select" className="w-full">
+              <SelectValue placeholder="Select Egg Type" />
+            </SelectTrigger>
+            <SelectContent>
+              {eggTypes.map(type => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center space-x-2">
+            <Switch id="heater-switch" checked={data.control.heater} onCheckedChange={toggleHeater} disabled={isLocked} />
+            <Label htmlFor="heater-switch" className="flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-primary" />
+                Heater
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch id="fan-switch" checked={data.control.fan} onCheckedChange={toggleFan} disabled={isLocked} />
+            <Label htmlFor="fan-switch" className="flex items-center gap-2">
+                <Fan className="w-5 h-5 text-primary" />
+                Fan
+            </Label>
+          </div>
+        </div>
+
+        <Button onClick={manualTurn} disabled={isLocked || data.control.motor} className="w-full">
+          <Repeat className="mr-2 h-4 w-4" />
+          Manual Turn
+        </Button>
+        
+        <div className="border-t border-border pt-6 space-y-4">
+            <div className="flex justify-between items-center">
+                <Label className="text-base font-medium">System Access</Label>
+                <UnlockDialog>
+                    <Button variant={isLocked ? "default" : "secondary"}>
+                        {isLocked ? "Unlock" : "Locked"}
+                    </Button>
+                </UnlockDialog>
             </div>
+            <div className="flex gap-2">
+                <AccessCodeDialog>
+                    <Button variant="outline" className="w-full" disabled={isLocked}>
+                        <Cog className="mr-2 h-4 w-4" /> Change PIN
+                    </Button>
+                </AccessCodeDialog>
+
+                <AiGuidanceDialog>
+                    <Button variant="outline" className="w-full">
+                        <Bot className="mr-2 h-4 w-4" /> AI Guidance
+                    </Button>
+                </AiGuidanceDialog>
+            </div>
+            <Button onClick={emergencyStop} variant="destructive" className="w-full" disabled={isLocked}>
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Emergency Stop
+            </Button>
         </div>
       </CardContent>
     </Card>
