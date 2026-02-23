@@ -9,8 +9,15 @@ import { useIncubator } from "@/contexts/incubator-context";
 import { Lock, Thermometer, Wind, RotateCw, OctagonAlert, BrainCircuit, X, Delete } from "lucide-react";
 import AiGuidanceDialog from "./ai-guidance-dialog";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
-const PinPad = () => {
+const PinPad = ({ onUnlockSuccess }: { onUnlockSuccess: () => void }) => {
     const { unlock } = useIncubator();
     const { toast } = useToast();
     const [pin, setPin] = useState('');
@@ -24,7 +31,9 @@ const PinPad = () => {
     const handleClear = () => setPin('');
 
     const handleUnlock = () => {
-        if (!unlock(pin)) {
+        if (unlock(pin)) {
+            onUnlockSuccess();
+        } else {
             toast({
                 variant: 'destructive',
                 title: 'Access Denied',
@@ -35,7 +44,7 @@ const PinPad = () => {
     };
 
     return (
-        <div className="flex flex-col items-center gap-4 w-full max-w-xs">
+        <div className="flex flex-col items-center gap-4 w-full max-w-xs pt-4">
             <div className="flex items-center justify-center gap-3 h-6">
                 {Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className="w-4 h-4 rounded-full border-2 border-primary bg-background data-[filled=true]:bg-primary transition-colors" data-filled={i < pin.length} />
@@ -57,13 +66,28 @@ const PinPad = () => {
 };
 
 const LockedOverlay = () => {
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
     return (
-        <div className="absolute inset-0 bg-card/90 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg z-10 p-6 text-center">
-            <Lock className="w-10 h-10 text-primary mb-2" />
-            <h3 className="text-xl font-semibold">Control Panel Locked</h3>
-            <p className="text-muted-foreground text-sm mb-4">Enter Access Code</p>
-            <PinPad />
-        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <div className="absolute inset-0 bg-card/90 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg z-10 p-6 text-center">
+                <Lock className="w-10 h-10 text-primary mb-2" />
+                <h3 className="text-xl font-semibold">Control Panel Locked</h3>
+                <p className="text-muted-foreground text-sm mb-4">Unlock to manage system controls.</p>
+                <DialogTrigger asChild>
+                    <Button>
+                        <Lock className="mr-2" />
+                        Unlock Controls
+                    </Button>
+                </DialogTrigger>
+            </div>
+            <DialogContent className="sm:max-w-xs">
+                <DialogHeader>
+                    <DialogTitle className="text-center">Enter Access Code</DialogTitle>
+                </DialogHeader>
+                <PinPad onUnlockSuccess={() => setIsDialogOpen(false)} />
+            </DialogContent>
+        </Dialog>
     );
 };
 
