@@ -8,22 +8,7 @@ import { Progress } from "@/components/ui/progress";
 
 export default function WaterManagement() {
   const { data, refillWater, isLocked } = useIncubator();
-  const waterLevel = data.sensors.waterLevel.toUpperCase();
-
-  const getWaterPercentage = (level: string) => {
-    switch (level) {
-      case 'HIGH':
-        return 90;
-      case 'MEDIUM':
-        return 50;
-      case 'LOW':
-        return 10;
-      default:
-        return 0;
-    }
-  };
-
-  const percentage = getWaterPercentage(waterLevel);
+  const percentage = data.sensors.waterPercent;
 
   return (
     <Card>
@@ -44,7 +29,7 @@ export default function WaterManagement() {
         </div>
         <p className="text-center text-2xl font-bold text-foreground">{percentage}%</p>
         <div className="pt-2">
-          <Button onClick={refillWater} variant="outline" disabled={waterLevel === 'HIGH' || isLocked} className="w-full">
+          <Button onClick={refillWater} variant="outline" disabled={percentage >= 95 || isLocked} className="w-full">
               <Plus className="mr-2 h-4 w-4" />
               Refill
           </Button>

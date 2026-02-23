@@ -11,6 +11,7 @@ export interface IncubatorData {
     heater: boolean;
     fan: boolean;
     motor: boolean;
+    humidityControl: boolean;
     targetTemperature: number;
     targetHumidity: number;
   };
@@ -18,10 +19,8 @@ export interface IncubatorData {
     temperature: number;
     humidity: number;
     waterLevel: string;
-  };
-  status: {
-    deviceOnline: boolean;
-    wifiConnected: boolean;
+    waterPercent: number;
+    eggsTurned: boolean;
   };
   alertSystem: {
     status: string; // e.g., 'SYSTEM_OK', 'WARNING', 'CRITICAL'
@@ -33,12 +32,27 @@ export interface IncubatorData {
   eggType: string;
 }
 
+interface IncubatorContextType {
+  data: IncubatorData;
+  isLocked: boolean;
+  toggleFan: () => void;
+  refillWater: () => void;
+  setEggType: (eggType: string) => void;
+  unlock: (pin: string) => Promise<boolean>;
+  lock: () => void;
+  setAccessCode: (pin: string) => void;
+  setTargetTemperature: (temp: number) => void;
+  setTargetHumidity: (humidity: number) => void;
+}
+
+
 // Initial State
 const initialData: IncubatorData = {
   control: {
     heater: false,
     fan: false,
     motor: false,
+    humidityControl: false,
     targetTemperature: 37.5,
     targetHumidity: 60,
   },
@@ -46,10 +60,8 @@ const initialData: IncubatorData = {
     temperature: 0,
     humidity: 0,
     waterLevel: "LOW",
-  },
-  status: {
-    deviceOnline: false,
-    wifiConnected: false,
+    waterPercent: 0,
+    eggsTurned: false,
   },
   alertSystem: {
     status: 'SYSTEM_OK',
@@ -87,7 +99,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
             ...prev,
             control: { ...prev.control, ...dbData.control },
             sensors: { ...prev.sensors, ...dbData.sensors },
-            status: { ...prev.status, ...dbData.status },
             alertSystem: { ...prev.alertSystem, ...dbData.alertSystem },
         }));
       } else {
@@ -134,21 +145,26 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       });
       return;
     }
-    if (data.sensors.waterLevel === 'HIGH') {
+    if (data.sensors.waterPercent >= 95) {
         toast({
             title: "Reservoir Full",
-            description: "Water level is already at maximum.",
+            description: "Water level is already near maximum.",
         });
         return;
     }
     if (!database) return;
+    
     const waterLevelRef = ref(database, 'incubator/sensors/waterLevel');
     set(waterLevelRef, "HIGH");
+
+    const waterPercentRef = ref(database, 'incubator/sensors/waterPercent');
+    set(waterPercentRef, 100);
+
      toast({
         title: "Water Refilled",
-        description: "The water reservoir has been set to HIGH.",
+        description: "The water reservoir has been set to 100%.",
       });
-  }, [isLocked, toast, data.sensors.waterLevel]);
+  }, [isLocked, toast, data.sensors.waterPercent]);
   
   const setEggType = useCallback((eggType: string) => {
     if (isLocked) {

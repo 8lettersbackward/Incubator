@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { useIncubator } from "@/contexts/incubator-context";
-import { Fan, Lightbulb, Repeat, Wifi, Droplets, Camera } from "lucide-react";
+import { Fan, Lightbulb } from "lucide-react";
 import StatusIndicator from "@/components/shared/status-indicator";
 import { cn } from "@/lib/utils";
 
@@ -31,13 +31,11 @@ export default function IncubatorVisualization() {
                     {data.sensors.humidity}% RH
                 </p>
             </div>
-            <div className="grid grid-cols-3 gap-x-3 gap-y-2 text-xs sm:grid-cols-6 sm:gap-y-1">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-2 text-xs sm:gap-y-1">
                 <StatusIndicator label="Heat Lamp" isActive={data.control.heater} />
                 <StatusIndicator label="Ventilation" isActive={data.control.fan} />
                 <StatusIndicator label="Turning" isActive={data.control.motor} activeColor="bg-blue-500" />
                 <StatusIndicator label="Water" isActive={data.sensors.waterLevel !== 'LOW'} />
-                <StatusIndicator label="Camera" isActive={data.status.deviceOnline} />
-                <StatusIndicator label="WiFi" isActive={data.status.wifiConnected} />
             </div>
         </div>
 
