@@ -30,8 +30,9 @@ const PinPad = ({ onUnlockSuccess }: { onUnlockSuccess: () => void }) => {
     const handleBackspace = () => setPin(pin.slice(0, -1));
     const handleClear = () => setPin('');
 
-    const handleUnlock = () => {
-        if (unlock(pin)) {
+    const handleUnlock = async () => {
+        const success = await unlock(pin);
+        if (success) {
             onUnlockSuccess();
         } else {
             toast({
@@ -115,25 +116,25 @@ export default function ControlPanel() {
               <Thermometer className="w-5 h-5 text-primary" />
               Heater
             </Label>
-            <Switch id="heater-toggle" checked={data.isHeaterActive} onCheckedChange={() => handleInteraction(toggleHeater)} />
+            <Switch id="heater-toggle" checked={data.isHeaterActive} onCheckedChange={() => handleInteraction(toggleHeater)} disabled={isLocked} />
           </div>
           <div className="flex items-center justify-between p-3 rounded-md border border-transparent hover:border-border transition-colors">
             <Label htmlFor="fan-toggle" className="flex items-center gap-2 cursor-pointer">
               <Wind className="w-5 h-5 text-primary" />
               Ventilation Fan
             </Label>
-            <Switch id="fan-toggle" checked={data.isFanActive} onCheckedChange={() => handleInteraction(toggleFan)} />
+            <Switch id="fan-toggle" checked={data.isFanActive} onCheckedChange={() => handleInteraction(toggleFan)} disabled={isLocked} />
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3">
-          <Button onClick={() => handleInteraction(manualTurn)} disabled={data.isTurningMotorActive}>
+          <Button onClick={() => handleInteraction(manualTurn)} disabled={data.isTurningMotorActive || isLocked}>
             <RotateCw className="mr-2" />
             {data.isTurningMotorActive ? 'Turning...' : 'Manual Egg Turning'}
           </Button>
           <div onClick={() => handleInteraction(() => {})}>
             <AiGuidanceDialog>
-               <Button variant="outline">
+               <Button variant="outline" disabled={isLocked}>
                   <BrainCircuit className="mr-2"/>
                   AI Hatching Guidance
               </Button>
@@ -142,7 +143,7 @@ export default function ControlPanel() {
         </div>
         
         <div className="pt-4">
-           <Button onClick={() => handleInteraction(emergencyStop)} variant="destructive" className="w-full">
+           <Button onClick={() => handleInteraction(emergencyStop)} variant="destructive" className="w-full" disabled={isLocked}>
              <OctagonAlert className="mr-2"/>
              Emergency Stop
            </Button>

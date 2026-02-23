@@ -1,6 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
+import { database } from '@/firebase/config';
+import { ref, onValue, set, get } from 'firebase/database';
 
 // Data types
 export interface IncubatorData {
@@ -28,7 +30,7 @@ export interface IncubatorData {
 interface IncubatorContextType {
   data: IncubatorData;
   isLocked: boolean;
-  unlock: (pin: string) => boolean;
+  unlock: (pin: string) => Promise<boolean>;
   lock: () => void;
   resetInactivityTimer: () => void;
   toggleHeater: () => void;
@@ -62,7 +64,6 @@ const initialData: IncubatorData = {
   },
 };
 
-const ACCESS_CODE = '1234';
 const AUTO_LOCK_TIMEOUT = 30000; // 30 seconds of inactivity
 
 const IncubatorContext = createContext<IncubatorContextType | undefined>(undefined);
@@ -86,41 +87,56 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     inactivityTimerRef.current = setTimeout(lock, AUTO_LOCK_TIMEOUT);
   }, [lock]);
   
-  const unlock = useCallback((pin: string): boolean => {
-    if (pin === ACCESS_CODE) {
-      setIsLocked(false);
-      resetInactivityTimer();
-      return true;
+  const unlock = useCallback(async (pin: string): Promise<boolean> => {
+    const accessCodeRef = ref(database, 'incubator/control/accessCode');
+    try {
+        const snapshot = await get(accessCodeRef);
+        const correctPin = snapshot.val();
+
+        if (pin === String(correctPin)) {
+          setIsLocked(false);
+          resetInactivityTimer();
+          return true;
+        }
+        return false;
+    } catch (error) {
+        console.error("Error fetching access code:", error);
+        return false;
     }
-    return false;
   }, [resetInactivityTimer]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setData(prevData => {
-        const tempChange = (Math.random() - 0.5) * 0.2;
-        const humidityChange = (Math.random() - 0.5) * 1;
-        
-        let newTemp = prevData.temperature + tempChange;
-        if (prevData.isHeaterActive && newTemp < 38.0) newTemp += 0.1;
-        if (!prevData.isHeaterActive && newTemp > 37.0) newTemp -= 0.1;
-        
-        let newHumidity = prevData.humidity + humidityChange;
-        if (prevData.isFanActive && newHumidity > 50) newHumidity -= 0.5;
-        if (!prevData.isFanActive && newHumidity < 60) newHumidity += 0.5;
+    const controlRef = ref(database, 'incubator/control');
+    const sensorsRef = ref(database, 'incubator/sensors');
 
-        const newWaterLevel = prevData.waterLevel - 0.05;
+    const unsubscribeControl = onValue(controlRef, (snapshot) => {
+        const controlData = snapshot.val();
+        if (controlData) {
+            setData(prevData => ({
+                ...prevData,
+                isHeaterActive: controlData.heater ?? prevData.isHeaterActive,
+                isFanActive: controlData.fan ?? prevData.isFanActive,
+                isTurningMotorActive: controlData.motor ?? prevData.isTurningMotorActive,
+            }));
+        }
+    });
 
-        return {
-          ...prevData,
-          temperature: parseFloat(newTemp.toFixed(1)),
-          humidity: Math.max(0, Math.min(100, parseFloat(newHumidity.toFixed(0)))),
-          waterLevel: Math.max(0, parseFloat(newWaterLevel.toFixed(1))),
-        };
-      });
-    }, 2000);
+    const unsubscribeSensors = onValue(sensorsRef, (snapshot) => {
+        const sensorData = snapshot.val();
+        if (sensorData) {
+            setData(prevData => ({
+                ...prevData,
+                temperature: sensorData.temperature ?? prevData.temperature,
+                humidity: sensorData.humidity ?? prevData.humidity,
+                waterLevel: sensorData.waterLevel ?? prevData.waterLevel,
+            }));
+        }
+    });
 
-    return () => clearInterval(interval);
+    return () => {
+        unsubscribeControl();
+        unsubscribeSensors();
+    };
   }, []);
 
   useEffect(() => {
@@ -132,26 +148,58 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const toggleHeater = useCallback(() => setData(d => ({ ...d, isHeaterActive: !d.isHeaterActive })), []);
-  const toggleFan = useCallback(() => setData(d => ({ ...d, isFanActive: !d.isFanActive })), []);
+  const handleInteraction = (action: () => void) => {
+    if (!isLocked) {
+        action();
+        resetInactivityTimer();
+    }
+  };
+
+  const toggleHeater = useCallback(() => {
+    if (isLocked) return;
+    const heaterRef = ref(database, 'incubator/control/heater');
+    set(heaterRef, !data.isHeaterActive);
+    resetInactivityTimer();
+  }, [data.isHeaterActive, isLocked, resetInactivityTimer]);
+
+  const toggleFan = useCallback(() => {
+    if (isLocked) return;
+    const fanRef = ref(database, 'incubator/control/fan');
+    set(fanRef, !data.isFanActive);
+    resetInactivityTimer();
+  }, [data.isFanActive, isLocked, resetInactivityTimer]);
   
   const manualTurn = useCallback(() => {
-    setData(d => ({ ...d, isTurningMotorActive: true }));
+    if (isLocked) return;
+    const motorRef = ref(database, 'incubator/control/motor');
+    set(motorRef, true);
     setTimeout(() => {
-      setData(d => ({ ...d, isTurningMotorActive: false }));
+      set(motorRef, false);
     }, 5000);
-  }, []);
+    resetInactivityTimer();
+  }, [isLocked, resetInactivityTimer]);
 
   const setHumidity = useCallback((level: number) => {
-    setData(d => ({...d, humidity: level}));
-  }, []);
+    if (isLocked) return;
+    const humidityRef = ref(database, 'incubator/sensors/humidity');
+    set(humidityRef, level);
+    resetInactivityTimer();
+  }, [isLocked, resetInactivityTimer]);
   
   const emergencyStop = useCallback(() => {
-    setData(d => ({ ...d, isHeaterActive: false, isFanActive: false, isTurningMotorActive: false }));
-  }, []);
+    if (isLocked) return;
+    const heaterRef = ref(database, 'incubator/control/heater');
+    set(heaterRef, false);
+    const fanRef = ref(database, 'incubator/control/fan');
+    set(fanRef, false);
+    const motorRef = ref(database, 'incubator/control/motor');
+    set(motorRef, false);
+    resetInactivityTimer();
+  }, [isLocked, resetInactivityTimer]);
 
   const refillWater = useCallback(() => {
-    setData(d => ({ ...d, waterLevel: 100 }));
+    const waterLevelRef = ref(database, 'incubator/sensors/waterLevel');
+    set(waterLevelRef, 100);
   }, []);
 
   const value = { data, isLocked, lock, unlock, resetInactivityTimer, toggleHeater, toggleFan, manualTurn, setHumidity, emergencyStop, refillWater };
