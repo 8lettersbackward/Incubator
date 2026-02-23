@@ -91,7 +91,7 @@ export default function ControlPanel() {
                       <Thermometer className="w-4 h-4" />
                       <span>Temp. Alert</span>
                   </div>
-                  <StatusIndicator label={data.status.criticalTempAlert ? "Active" : "OK"} isActive={data.status.criticalTempAlert} activeColor="bg-destructive" />
+                  <StatusIndicator label={data.status.criticalTempAlert ? "CRITICAL" : "OK"} isActive={data.status.criticalTempAlert} activeColor="bg-destructive" />
               </div>
           </div>
 
