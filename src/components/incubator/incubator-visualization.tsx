@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { useIncubator } from "@/contexts/incubator-context";
-import { Fan, Lightbulb, Repeat, Wifi, Droplets } from "lucide-react";
+import { Fan, Lightbulb, Repeat, Wifi, Droplets, Camera } from "lucide-react";
 import StatusIndicator from "@/components/shared/status-indicator";
 import { cn } from "@/lib/utils";
 
@@ -25,27 +25,27 @@ export default function IncubatorVisualization() {
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
             <div className="flex items-end gap-2 sm:gap-4">
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary tracking-tighter">
-                    {data.temperature.toFixed(1)}°C
+                    {data.sensors.temperature.toFixed(1)}°C
                 </h2>
                 <p className="text-xl sm:text-2xl md:text-3xl font-medium text-accent tracking-tighter mb-0.5 sm:mb-1">
-                    {data.humidity}% RH
+                    {data.sensors.humidity}% RH
                 </p>
             </div>
             <div className="grid grid-cols-3 gap-x-3 gap-y-2 text-xs sm:grid-cols-6 sm:gap-y-1">
-                <StatusIndicator label="Heat Lamp" isActive={data.isHeaterActive} />
-                <StatusIndicator label="Ventilation" isActive={data.isFanActive} />
-                <StatusIndicator label="Turning" isActive={data.isTurningMotorActive} activeColor="bg-blue-500" />
-                <StatusIndicator label="Water" isActive={data.waterLevel > 20} />
-                <StatusIndicator label="Camera" isActive={data.camera.isOn} />
-                <StatusIndicator label="WiFi" isActive={data.wifi.connected} />
+                <StatusIndicator label="Heat Lamp" isActive={data.control.heater} />
+                <StatusIndicator label="Ventilation" isActive={data.control.fan} />
+                <StatusIndicator label="Turning" isActive={data.control.motor} activeColor="bg-blue-500" />
+                <StatusIndicator label="Water" isActive={data.sensors.waterLevel !== 'LOW'} />
+                <StatusIndicator label="Device" isActive={data.status.deviceOnline} />
+                <StatusIndicator label="WiFi" isActive={data.status.wifiConnected} />
             </div>
         </div>
 
         <div className="flex-1 relative bg-black/20 border border-border rounded-lg p-4 flex flex-col items-center justify-center gap-4">
           {/* Top components */}
           <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
-            <Lightbulb className={cn("w-8 h-8 text-muted-foreground transition-all", data.isHeaterActive && "text-yellow-400 drop-shadow-[0_0_8px_theme(colors.yellow.400)]")} />
-            <Fan className={cn("w-8 h-8 text-muted-foreground transition-all", data.isFanActive && "animate-spin text-accent")} />
+            <Lightbulb className={cn("w-8 h-8 text-muted-foreground transition-all", data.control.heater && "text-yellow-400 drop-shadow-[0_0_8px_theme(colors.yellow.400)]")} />
+            <Fan className={cn("w-8 h-8 text-muted-foreground transition-all", data.control.fan && "animate-spin text-accent")} />
           </div>
           
           {/* Egg Trays */}

@@ -93,7 +93,7 @@ const LockedOverlay = () => {
 };
 
 export default function ControlPanel() {
-  const { isLocked, data, toggleHeater, toggleFan, manualTurn, emergencyStop, resetInactivityTimer } = useIncubator();
+  const { data, isLocked, toggleHeater, toggleFan, manualTurn, emergencyStop, resetInactivityTimer } = useIncubator();
 
   const handleInteraction = (action: () => void) => {
     if (!isLocked) {
@@ -116,21 +116,21 @@ export default function ControlPanel() {
               <Thermometer className="w-5 h-5 text-primary" />
               Heater
             </Label>
-            <Switch id="heater-toggle" checked={data.isHeaterActive} onCheckedChange={() => handleInteraction(toggleHeater)} disabled={isLocked} />
+            <Switch id="heater-toggle" checked={data.control.heater} onCheckedChange={() => handleInteraction(toggleHeater)} disabled={isLocked} />
           </div>
           <div className="flex items-center justify-between p-3 rounded-md border border-transparent hover:border-border transition-colors">
             <Label htmlFor="fan-toggle" className="flex items-center gap-2 cursor-pointer">
               <Wind className="w-5 h-5 text-primary" />
               Ventilation Fan
             </Label>
-            <Switch id="fan-toggle" checked={data.isFanActive} onCheckedChange={() => handleInteraction(toggleFan)} disabled={isLocked} />
+            <Switch id="fan-toggle" checked={data.control.fan} onCheckedChange={() => handleInteraction(toggleFan)} disabled={isLocked} />
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3">
-          <Button onClick={() => handleInteraction(manualTurn)} disabled={data.isTurningMotorActive || isLocked}>
+          <Button onClick={() => handleInteraction(manualTurn)} disabled={data.control.motor || isLocked}>
             <RotateCw className="mr-2" />
-            {data.isTurningMotorActive ? 'Turning...' : 'Manual Egg Turning'}
+            {data.control.motor ? 'Turning...' : 'Manual Egg Turning'}
           </Button>
           <div onClick={() => handleInteraction(() => {})}>
             <AiGuidanceDialog>

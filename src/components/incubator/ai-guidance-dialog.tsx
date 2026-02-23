@@ -19,6 +19,19 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, Lightbulb, AlertTriangle, Thermometer, Droplets, RotateCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+function waterLevelToPercentage(level: string): number {
+    switch (level.toUpperCase()) {
+      case 'HIGH':
+        return 90;
+      case 'MEDIUM':
+        return 50;
+      case 'LOW':
+        return 10;
+      default:
+        return 0;
+    }
+  }
+
 export default function AiGuidanceDialog({ children }: { children: ReactNode }) {
   const { data: incubatorData } = useIncubator();
   const { toast } = useToast();
@@ -31,12 +44,12 @@ export default function AiGuidanceDialog({ children }: { children: ReactNode }) 
     setResult(null);
 
     const input = {
-      currentTemperature: incubatorData.temperature,
-      currentHumidity: incubatorData.humidity,
-      isHeaterActive: incubatorData.isHeaterActive,
-      isFanActive: incubatorData.isFanActive,
-      isTurningMotorActive: incubatorData.isTurningMotorActive,
-      waterLevelPercentage: incubatorData.waterLevel,
+      currentTemperature: incubatorData.sensors.temperature,
+      currentHumidity: incubatorData.sensors.humidity,
+      isHeaterActive: incubatorData.control.heater,
+      isFanActive: incubatorData.control.fan,
+      isTurningMotorActive: incubatorData.control.motor,
+      waterLevelPercentage: waterLevelToPercentage(incubatorData.sensors.waterLevel),
       eggType: incubatorData.eggType,
     };
 

@@ -2,66 +2,66 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { database } from '@/firebase/config';
-import { ref, onValue, set, get } from 'firebase/database';
+import { ref, onValue, set } from 'firebase/database';
 
 // Data types
 export interface IncubatorData {
-  temperature: number;
-  humidity: number;
-  isHeaterActive: boolean;
-  isFanActive: boolean;
-  isTurningMotorActive: boolean;
-  waterLevel: number;
-  eggType: string;
-  wifi: {
-    connected: boolean;
-    ssid: string;
-    ip: string;
-    signal: number;
+  control: {
+    heater: boolean;
+    fan: boolean;
+    motor: boolean;
+    humidityControl: boolean;
+    accessCode: string;
   };
-  camera: {
-    isOn: boolean;
-    quality: string;
-    fps: number;
-    dataUsage: string;
+  sensors: {
+    temperature: number;
+    humidity: number;
+    waterLevel: string;
+    eggsTurned: boolean;
   };
+  status: {
+    deviceOnline: boolean;
+    wifiConnected: boolean;
+    systemLocked: boolean;
+  };
+  eggType: string; // UI-specific, not in DB schema but useful for context
 }
 
 interface IncubatorContextType {
   data: IncubatorData;
   isLocked: boolean;
   unlock: (pin: string) => Promise<boolean>;
-  lock: () => void;
   resetInactivityTimer: () => void;
   toggleHeater: () => void;
   toggleFan: () => void;
+  toggleHumidityControl: () => void;
   manualTurn: () => void;
-  setHumidity: (level: number) => void;
   emergencyStop: () => void;
   refillWater: () => void;
+  setAccessCode: (newCode: string) => void;
 }
 
 // Initial State
 const initialData: IncubatorData = {
-  temperature: 37.5,
-  humidity: 55,
-  isHeaterActive: true,
-  isFanActive: false,
-  isTurningMotorActive: false,
-  waterLevel: 75,
+  control: {
+    heater: false,
+    fan: false,
+    motor: false,
+    humidityControl: false,
+    accessCode: "1234",
+  },
+  sensors: {
+    temperature: 0,
+    humidity: 0,
+    waterLevel: "LOW",
+    eggsTurned: false,
+  },
+  status: {
+    deviceOnline: false,
+    wifiConnected: false,
+    systemLocked: true,
+  },
   eggType: 'Chicken',
-  wifi: {
-    connected: true,
-    ssid: 'OvumNet_5G',
-    ip: '192.168.1.123',
-    signal: 92,
-  },
-  camera: {
-    isOn: true,
-    quality: '1080p',
-    fps: 30,
-    dataUsage: '2.1 MB/s',
-  },
 };
 
 const AUTO_LOCK_TIMEOUT = 30000; // 30 seconds of inactivity
@@ -70,11 +70,11 @@ const IncubatorContext = createContext<IncubatorContextType | undefined>(undefin
 
 export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState<IncubatorData>(initialData);
-  const [isLocked, setIsLocked] = useState(true);
   const inactivityTimerRef = useRef<NodeJS.Timeout>();
 
   const lock = useCallback(() => {
-    setIsLocked(true);
+    const systemLockedRef = ref(database, 'incubator/status/systemLocked');
+    set(systemLockedRef, true);
     if (inactivityTimerRef.current) {
         clearTimeout(inactivityTimerRef.current);
     }
@@ -84,59 +84,43 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     if (inactivityTimerRef.current) {
       clearTimeout(inactivityTimerRef.current);
     }
-    inactivityTimerRef.current = setTimeout(lock, AUTO_LOCK_TIMEOUT);
-  }, [lock]);
+    // Only set the timer if the system is unlocked
+    if (!data.status.systemLocked) {
+        inactivityTimerRef.current = setTimeout(lock, AUTO_LOCK_TIMEOUT);
+    }
+  }, [lock, data.status.systemLocked]);
   
   const unlock = useCallback(async (pin: string): Promise<boolean> => {
-    const accessCodeRef = ref(database, 'incubator/control/accessCode');
-    try {
-        const snapshot = await get(accessCodeRef);
-        const correctPin = snapshot.val();
-
-        if (pin === String(correctPin)) {
-          setIsLocked(false);
-          resetInactivityTimer();
-          return true;
-        }
-        return false;
-    } catch (error) {
-        console.error("Error fetching access code:", error);
-        return false;
+    if (pin === data.control.accessCode) {
+        const systemLockedRef = ref(database, 'incubator/status/systemLocked');
+        await set(systemLockedRef, false);
+        resetInactivityTimer();
+        return true;
     }
-  }, [resetInactivityTimer]);
+    return false;
+  }, [data.control.accessCode, resetInactivityTimer]);
 
   useEffect(() => {
-    const controlRef = ref(database, 'incubator/control');
-    const sensorsRef = ref(database, 'incubator/sensors');
-
-    const unsubscribeControl = onValue(controlRef, (snapshot) => {
-        const controlData = snapshot.val();
-        if (controlData) {
-            setData(prevData => ({
-                ...prevData,
-                isHeaterActive: controlData.heater ?? prevData.isHeaterActive,
-                isFanActive: controlData.fan ?? prevData.isFanActive,
-                isTurningMotorActive: controlData.motor ?? prevData.isTurningMotorActive,
-            }));
-        }
+    const incubatorRef = ref(database, 'incubator');
+    const unsubscribe = onValue(incubatorRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const dbData = snapshot.val();
+        setData(prev => ({
+            ...prev, // Keep non-DB properties like eggType
+            control: { ...initialData.control, ...dbData.control },
+            sensors: { ...initialData.sensors, ...dbData.sensors },
+            status: { ...initialData.status, ...dbData.status },
+        }));
+      } else {
+        // Set default data in Firebase if it doesn't exist
+        set(incubatorRef, {
+            control: initialData.control,
+            sensors: initialData.sensors,
+            status: initialData.status,
+        });
+      }
     });
-
-    const unsubscribeSensors = onValue(sensorsRef, (snapshot) => {
-        const sensorData = snapshot.val();
-        if (sensorData) {
-            setData(prevData => ({
-                ...prevData,
-                temperature: sensorData.temperature ?? prevData.temperature,
-                humidity: sensorData.humidity ?? prevData.humidity,
-                waterLevel: sensorData.waterLevel ?? prevData.waterLevel,
-            }));
-        }
-    });
-
-    return () => {
-        unsubscribeControl();
-        unsubscribeSensors();
-    };
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -148,61 +132,57 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const handleInteraction = (action: () => void) => {
-    if (!isLocked) {
-        action();
-        resetInactivityTimer();
-    }
-  };
-
-  const toggleHeater = useCallback(() => {
-    if (isLocked) return;
-    const heaterRef = ref(database, 'incubator/control/heater');
-    set(heaterRef, !data.isHeaterActive);
+  const setControlValue = useCallback((key: string, value: any) => {
+    if (data.status.systemLocked) return;
+    const controlRef = ref(database, `incubator/control/${key}`);
+    set(controlRef, value);
     resetInactivityTimer();
-  }, [data.isHeaterActive, isLocked, resetInactivityTimer]);
+  }, [data.status.systemLocked, resetInactivityTimer]);
 
-  const toggleFan = useCallback(() => {
-    if (isLocked) return;
-    const fanRef = ref(database, 'incubator/control/fan');
-    set(fanRef, !data.isFanActive);
-    resetInactivityTimer();
-  }, [data.isFanActive, isLocked, resetInactivityTimer]);
-  
+  const toggleHeater = useCallback(() => setControlValue('heater', !data.control.heater), [setControlValue, data.control.heater]);
+  const toggleFan = useCallback(() => setControlValue('fan', !data.control.fan), [setControlValue, data.control.fan]);
+  const toggleHumidityControl = useCallback(() => setControlValue('humidityControl', !data.control.humidityControl), [setControlValue, data.control.humidityControl]);
+
   const manualTurn = useCallback(() => {
-    if (isLocked) return;
+    if (data.status.systemLocked) return;
     const motorRef = ref(database, 'incubator/control/motor');
     set(motorRef, true);
     setTimeout(() => {
       set(motorRef, false);
-    }, 5000);
+    }, 5000); // Motor runs for 5s then state is reset
     resetInactivityTimer();
-  }, [isLocked, resetInactivityTimer]);
+  }, [data.status.systemLocked, resetInactivityTimer]);
 
-  const setHumidity = useCallback((level: number) => {
-    if (isLocked) return;
-    const humidityRef = ref(database, 'incubator/sensors/humidity');
-    set(humidityRef, level);
-    resetInactivityTimer();
-  }, [isLocked, resetInactivityTimer]);
-  
   const emergencyStop = useCallback(() => {
-    if (isLocked) return;
-    const heaterRef = ref(database, 'incubator/control/heater');
-    set(heaterRef, false);
-    const fanRef = ref(database, 'incubator/control/fan');
-    set(fanRef, false);
-    const motorRef = ref(database, 'incubator/control/motor');
-    set(motorRef, false);
+    if (data.status.systemLocked) return;
+    const controlRef = ref(database, 'incubator/control');
+    // Keep access code, turn off all controls
+    set(controlRef, {
+        ...data.control,
+        heater: false,
+        fan: false,
+        motor: false,
+        humidityControl: false,
+    });
     resetInactivityTimer();
-  }, [isLocked, resetInactivityTimer]);
+  }, [data.control, data.status.systemLocked, resetInactivityTimer]);
 
   const refillWater = useCallback(() => {
+    // This action is not protected by the lock
     const waterLevelRef = ref(database, 'incubator/sensors/waterLevel');
-    set(waterLevelRef, 100);
+    set(waterLevelRef, "HIGH");
   }, []);
+  
+  const setAccessCode = useCallback((newCode: string) => {
+    if(data.status.systemLocked) return;
+    if (newCode.length === 4 && /^\d+$/.test(newCode)) { // Basic validation
+      const accessCodeRef = ref(database, 'incubator/control/accessCode');
+      set(accessCodeRef, newCode);
+      resetInactivityTimer();
+    }
+  }, [data.status.systemLocked, resetInactivityTimer]);
 
-  const value = { data, isLocked, lock, unlock, resetInactivityTimer, toggleHeater, toggleFan, manualTurn, setHumidity, emergencyStop, refillWater };
+  const value = { data, isLocked: data.status.systemLocked, unlock, resetInactivityTimer, toggleHeater, toggleFan, manualTurn, emergencyStop, refillWater, toggleHumidityControl, setAccessCode };
 
   return (
     <IncubatorContext.Provider value={value}>
