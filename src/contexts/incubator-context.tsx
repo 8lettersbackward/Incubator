@@ -77,10 +77,10 @@ const initialData: IncubatorData = {
     wifiConnected: true,
   },
   sensors: {
-    temperature: 0,
-    humidity: 0,
-    waterLevel: "LOW",
-    waterPercent: 0,
+    temperature: 37.5,
+    humidity: 55,
+    waterLevel: "HIGH",
+    waterPercent: 80,
     eggsTurned: false,
   },
   alertSystem: {
