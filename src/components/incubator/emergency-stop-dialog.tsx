@@ -15,18 +15,10 @@ import { useIncubator } from "@/contexts/incubator-context";
 import { useToast } from "@/hooks/use-toast";
 
 export function EmergencyStopDialog({ children }: { children: React.ReactNode }) {
-  const { emergencyStop, isLocked } = useIncubator();
+  const { emergencyStop } = useIncubator();
   const { toast } = useToast();
 
   const handleEmergencyStop = () => {
-    if (isLocked) {
-      toast({
-        variant: "destructive",
-        title: "System Locked",
-        description: "Please unlock the system to perform an emergency stop.",
-      });
-      return;
-    }
     emergencyStop();
     toast({
       variant: "destructive",

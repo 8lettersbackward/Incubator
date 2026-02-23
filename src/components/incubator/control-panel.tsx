@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import StatusIndicator from "../shared/status-indicator";
 
 export default function ControlPanel() {
-  const { data, isLocked, toggleFan } = useIncubator();
+  const { data, toggleFan } = useIncubator();
 
   // Define safe ranges for chicken eggs as a default
   const tempSafeMin = 37.0;
@@ -78,7 +78,7 @@ export default function ControlPanel() {
                 <Fan className="w-5 h-5 text-primary" />
                 Ventilation Fan
             </Label>
-            <Switch id="fan-switch" checked={data.control.fan} onCheckedChange={toggleFan} disabled={isLocked} />
+            <Switch id="fan-switch" checked={data.control.fan} onCheckedChange={toggleFan} />
         </div>
       </CardContent>
     </Card>
