@@ -5,6 +5,7 @@ import IncubatorVisualization from '@/components/incubator/incubator-visualizati
 import ControlPanel from '@/components/incubator/control-panel';
 import WaterManagement from '@/components/incubator/water-management';
 import CameraConnectivity from '@/components/incubator/camera-connectivity';
+import ComponentsGuide from '@/components/incubator/components-guide';
 
 export default function Home() {
   return (
@@ -21,6 +22,9 @@ export default function Home() {
           <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
             <WaterManagement />
             <CameraConnectivity />
+          </div>
+          <div className="lg:col-span-4">
+            <ComponentsGuide />
           </div>
         </div>
       </main>
