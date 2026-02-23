@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 
 // Data types
 export interface IncubatorData {
@@ -27,9 +27,10 @@ export interface IncubatorData {
 
 interface IncubatorContextType {
   data: IncubatorData;
-  isLoggedIn: boolean;
-  login: () => void;
-  logout: () => void;
+  isLocked: boolean;
+  unlock: (pin: string) => boolean;
+  lock: () => void;
+  resetInactivityTimer: () => void;
   toggleHeater: () => void;
   toggleFan: () => void;
   manualTurn: () => void;
@@ -61,11 +62,38 @@ const initialData: IncubatorData = {
   },
 };
 
+const ACCESS_CODE = '1234';
+const AUTO_LOCK_TIMEOUT = 30000; // 30 seconds of inactivity
+
 const IncubatorContext = createContext<IncubatorContextType | undefined>(undefined);
 
 export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState<IncubatorData>(initialData);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLocked, setIsLocked] = useState(true);
+  const inactivityTimerRef = useRef<NodeJS.Timeout>();
+
+  const lock = useCallback(() => {
+    setIsLocked(true);
+    if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+    }
+  }, []);
+
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+    inactivityTimerRef.current = setTimeout(lock, AUTO_LOCK_TIMEOUT);
+  }, [lock]);
+  
+  const unlock = useCallback((pin: string): boolean => {
+    if (pin === ACCESS_CODE) {
+      setIsLocked(false);
+      resetInactivityTimer();
+      return true;
+    }
+    return false;
+  }, [resetInactivityTimer]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -81,7 +109,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
         if (prevData.isFanActive && newHumidity > 50) newHumidity -= 0.5;
         if (!prevData.isFanActive && newHumidity < 60) newHumidity += 0.5;
 
-        const newWaterLevel = prevData.waterLevel - 0.5;
+        const newWaterLevel = prevData.waterLevel - 0.05;
 
         return {
           ...prevData,
@@ -95,8 +123,14 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(interval);
   }, []);
 
-  const login = useCallback(() => setIsLoggedIn(true), []);
-  const logout = useCallback(() => setIsLoggedIn(false), []);
+  useEffect(() => {
+    // Cleanup timer on component unmount
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, []);
 
   const toggleHeater = useCallback(() => setData(d => ({ ...d, isHeaterActive: !d.isHeaterActive })), []);
   const toggleFan = useCallback(() => setData(d => ({ ...d, isFanActive: !d.isFanActive })), []);
@@ -120,7 +154,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     setData(d => ({ ...d, waterLevel: 100 }));
   }, []);
 
-  const value = { data, isLoggedIn, login, logout, toggleHeater, toggleFan, manualTurn, setHumidity, emergencyStop, refillWater };
+  const value = { data, isLocked, lock, unlock, resetInactivityTimer, toggleHeater, toggleFan, manualTurn, setHumidity, emergencyStop, refillWater };
 
   return (
     <IncubatorContext.Provider value={value}>
