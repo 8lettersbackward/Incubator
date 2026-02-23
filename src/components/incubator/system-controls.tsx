@@ -39,7 +39,7 @@ export default function SystemControls() {
             onCheckedChange: toggleFan,
         },
         {
-            icon: <RotateCw className={cn("w-6 h-6 text-primary", data.control.motor && "animate-spin")} />,
+            icon: <RotateCw className="w-6 h-6 text-primary" />,
             label: "Turning Motor",
             description: "Automatic egg rotation",
             checked: data.control.motor,
