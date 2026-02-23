@@ -3,39 +3,36 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useIncubator } from "@/contexts/incubator-context";
-import { Droplets } from "lucide-react";
+import { Droplets, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function WaterManagement() {
-  const { data } = useIncubator();
+  const { data, refillWater } = useIncubator();
   const waterLevel = data.waterLevel;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Droplets className="w-6 h-6 text-primary" />
-          Water Management
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Droplets className="w-6 h-6 text-primary" />
+            Water Management
+          </div>
+          <Button onClick={refillWater} size="sm" variant="outline" disabled={waterLevel === 100}>
+            <Plus className="mr-2 h-4 w-4" />
+            Refill
+          </Button>
         </CardTitle>
-        <CardDescription>Reservoir water level</CardDescription>
+        <CardDescription>Reservoir water level for humidity control.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-2 pt-2">
         <div className="flex items-center gap-4">
           <Progress value={waterLevel} className="w-full h-3" />
-          <span className="text-xl font-bold text-primary">{waterLevel}%</span>
+          <span className="text-xl font-bold text-primary">{waterLevel.toFixed(0)}%</span>
         </div>
-        <div className="flex justify-between text-xs text-muted-foreground pt-2">
-          <div className="flex flex-col items-center">
-            <div className={`w-3 h-3 rounded-full ${waterLevel < 33 ? 'bg-destructive shadow-[0_0_8px_2px_hsl(var(--destructive))]' : 'bg-muted'}`} />
-            <span>Low</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className={`w-3 h-3 rounded-full ${waterLevel >= 33 && waterLevel < 66 ? 'bg-yellow-500 shadow-[0_0_8px_2px_#eab308]' : 'bg-muted'}`} />
-            <span>Mid</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className={`w-3 h-3 rounded-full ${waterLevel >= 66 ? 'bg-accent shadow-[0_0_8px_2px_hsl(var(--accent))]' : 'bg-muted'}`} />
-            <span>High</span>
-          </div>
+        <div className="flex justify-between text-xs text-muted-foreground pt-1">
+          <span>Empty</span>
+          <span>Full</span>
         </div>
       </CardContent>
     </Card>

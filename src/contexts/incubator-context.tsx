@@ -35,6 +35,7 @@ interface IncubatorContextType {
   manualTurn: () => void;
   setHumidity: (level: number) => void;
   emergencyStop: () => void;
+  refillWater: () => void;
 }
 
 // Initial State
@@ -80,11 +81,13 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
         if (prevData.isFanActive && newHumidity > 50) newHumidity -= 0.5;
         if (!prevData.isFanActive && newHumidity < 60) newHumidity += 0.5;
 
+        const newWaterLevel = prevData.waterLevel - 0.5;
 
         return {
           ...prevData,
           temperature: parseFloat(newTemp.toFixed(1)),
           humidity: Math.max(0, Math.min(100, parseFloat(newHumidity.toFixed(0)))),
+          waterLevel: Math.max(0, parseFloat(newWaterLevel.toFixed(1))),
         };
       });
     }, 2000);
@@ -113,7 +116,11 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     setData(d => ({ ...d, isHeaterActive: false, isFanActive: false, isTurningMotorActive: false }));
   }, []);
 
-  const value = { data, isLoggedIn, login, logout, toggleHeater, toggleFan, manualTurn, setHumidity, emergencyStop };
+  const refillWater = useCallback(() => {
+    setData(d => ({ ...d, waterLevel: 100 }));
+  }, []);
+
+  const value = { data, isLoggedIn, login, logout, toggleHeater, toggleFan, manualTurn, setHumidity, emergencyStop, refillWater };
 
   return (
     <IncubatorContext.Provider value={value}>
