@@ -45,8 +45,15 @@ interface IncubatorContextType {
   setTargetTemperature: (temp: number) => void;
   setTargetHumidity: (humidity: number) => void;
   setIncubationDay: (day: number) => void;
+  setTotalIncubationDays: (days: number) => void;
 }
 
+const EGG_INCUBATION_PERIODS: { [key: string]: number } = {
+  Chicken: 21,
+  Duck: 28,
+  Quail: 18,
+  Turkey: 28,
+};
 
 // Initial State
 const initialData: IncubatorData = {
@@ -78,15 +85,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const [isLocked, setIsLocked] = useState(true);
   const [accessCode, setAccessCode] = useState('1234'); // Default PIN
   const { toast } = useToast();
-
-  const EGG_INCUBATION_PERIODS: { [key: string]: number } = {
-    Chicken: 21,
-    Duck: 28,
-    Quail: 18,
-    Turkey: 28,
-  };
-
-  const totalIncubationDays = EGG_INCUBATION_PERIODS[data.eggType] || 21;
+  const [totalIncubationDays, setTotalIncubationDaysState] = useState(EGG_INCUBATION_PERIODS[initialData.eggType]);
 
   useEffect(() => {
     if (!database) {
@@ -115,6 +114,10 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, [toast]);
   
+  useEffect(() => {
+    setTotalIncubationDaysState(EGG_INCUBATION_PERIODS[data.eggType] || 21);
+  }, [data.eggType]);
+
   const setControlValue = useCallback((key: string, value: any) => {
     if (isLocked) {
       toast({
@@ -214,6 +217,19 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isLocked, toast, totalIncubationDays]);
 
+  const setTotalIncubationDays = (days: number) => {
+    if (isLocked) {
+      toast({
+        variant: "destructive",
+        title: "System Locked",
+        description: "Unlock the system to change incubation duration.",
+      });
+      return;
+    }
+    setTotalIncubationDaysState(days);
+    setData(prev => ({ ...prev, incubationDay: 1 }));
+  };
+
   const unlock = useCallback((pin: string) => {
     return new Promise<boolean>((resolve) => {
       if (pin === accessCode) {
@@ -233,7 +249,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [toast]);
 
-  const value = { data, isLocked, totalIncubationDays, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setIncubationDay };
+  const value = { data, isLocked, totalIncubationDays, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setIncubationDay, setTotalIncubationDays };
 
   return (
     <IncubatorContext.Provider value={value}>

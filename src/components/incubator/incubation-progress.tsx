@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { CalendarDays, Minus, Plus } from "lucide-react";
 
+const presets = [14, 18, 21, 24, 28, 35];
+
 export default function IncubationProgress() {
-  const { data, totalIncubationDays, setIncubationDay, isLocked } = useIncubator();
+  const { data, totalIncubationDays, setIncubationDay, setTotalIncubationDays, isLocked } = useIncubator();
   const { incubationDay, eggType } = data;
 
   const progressPercentage = (incubationDay / totalIncubationDays) * 100;
@@ -15,6 +17,10 @@ export default function IncubationProgress() {
 
   const handleDayChange = (change: number) => {
     setIncubationDay(incubationDay + change);
+  };
+
+  const handlePresetClick = (days: number) => {
+    setTotalIncubationDays(days);
   };
 
   return (
@@ -28,7 +34,7 @@ export default function IncubationProgress() {
           Tracking embryo development for {eggType} eggs.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 pt-2">
+      <CardContent className="space-y-6 pt-2">
         <div>
           <Progress value={progressPercentage} className="h-3" />
           <div className="mt-2 flex justify-between text-xs text-muted-foreground">
@@ -42,6 +48,23 @@ export default function IncubationProgress() {
             <p className="text-sm text-accent">{remainingDays} days remaining</p>
         </div>
 
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-center text-muted-foreground">Duration Presets</p>
+          <div className="grid grid-cols-3 gap-2">
+            {presets.map((days) => (
+              <Button
+                key={days}
+                variant={totalIncubationDays === days ? "default" : "outline"}
+                size="sm"
+                onClick={() => handlePresetClick(days)}
+                disabled={isLocked}
+              >
+                {days} days
+              </Button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex items-center justify-center gap-4">
           <Button
             variant="outline"
@@ -52,7 +75,7 @@ export default function IncubationProgress() {
             <Minus className="h-4 w-4" />
             <span className="sr-only">Previous Day</span>
           </Button>
-          <p className="font-semibold tabular-nums">Manual Day Adjustment</p>
+          <p className="font-semibold tabular-nums text-sm">Manual Day Adjustment</p>
           <Button
             variant="outline"
             size="icon"
