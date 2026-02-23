@@ -24,7 +24,7 @@ export default function ControlPanel() {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Environmental Monitoring</CardTitle>
+        <CardTitle>Control Panel</CardTitle>
         <CardDescription>Live sensor data and system alerts.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 pt-4">
