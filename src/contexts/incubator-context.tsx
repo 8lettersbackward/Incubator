@@ -72,7 +72,7 @@ const initialData: IncubatorData = {
     motor: false,
     humidityControl: false,
     targetTemperature: 37.5,
-    targetHumidity: 60,
+    targetHumidity: 55,
     cameraOn: true,
     wifiConnected: true,
   },
@@ -88,7 +88,7 @@ const initialData: IncubatorData = {
     temperatureState: "NORMAL",
     humidityState: "NORMAL",
     buzzer: false,
-    message: "Incubation Stable",
+    message: "System stable. Optimal conditions.",
   },
   eggType: 'Chicken',
   incubationDay: 1,
@@ -134,50 +134,51 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       temperatureState: 'NORMAL',
       humidityState: 'NORMAL',
       buzzer: false,
-      message: 'Incubation Stable',
+      message: 'System stable. Optimal conditions.',
     };
 
-    // Determine temperature state
-    if (temperature < 35) {
+    // Temperature check
+    if (temperature < 36.0) {
       newAlert.status = 'CRITICAL';
       newAlert.temperatureState = 'LOW';
-    } else if (temperature < 36) {
+    } else if (temperature < 37.0) {
       newAlert.status = 'WARNING';
       newAlert.temperatureState = 'LOW';
-    } else if (temperature > 40) {
+    } else if (temperature > 39.0) {
       newAlert.status = 'CRITICAL';
       newAlert.temperatureState = 'HIGH';
-    } else if (temperature > 39) {
+    } else if (temperature > 38.0) {
       newAlert.status = 'WARNING';
       newAlert.temperatureState = 'HIGH';
     }
 
-    // Determine humidity state, potentially escalating status to CRITICAL
-    if (humidity < 40) {
+    // Humidity check, potentially escalating status
+    if (humidity < 45) {
       newAlert.status = 'CRITICAL';
       newAlert.humidityState = 'LOW';
-    } else if (humidity < 45) {
+    } else if (humidity < 50) {
       if (newAlert.status !== 'CRITICAL') newAlert.status = 'WARNING';
       newAlert.humidityState = 'LOW';
-    } else if (humidity > 70) {
+    } else if (humidity > 65) {
       newAlert.status = 'CRITICAL';
       newAlert.humidityState = 'HIGH';
-    } else if (humidity > 65) {
+    } else if (humidity > 60) {
       if (newAlert.status !== 'CRITICAL') newAlert.status = 'WARNING';
       newAlert.humidityState = 'HIGH';
     }
+
 
     // Set message and buzzer based on final status
     if (newAlert.status === 'CRITICAL') {
       newAlert.buzzer = true;
       const tempMsg = newAlert.temperatureState !== 'NORMAL' ? `Temp is ${newAlert.temperatureState.toLowerCase()}` : '';
       const humMsg = newAlert.humidityState !== 'NORMAL' ? `Humidity is ${newAlert.humidityState.toLowerCase()}` : '';
-      newAlert.message = `CRITICAL: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}`;
+      newAlert.message = `CRITICAL: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}. Immediate action required.`;
     } else if (newAlert.status === 'WARNING') {
       newAlert.buzzer = false;
       const tempMsg = newAlert.temperatureState !== 'NORMAL' ? `Temp is ${newAlert.temperatureState.toLowerCase()}` : '';
       const humMsg = newAlert.humidityState !== 'NORMAL' ? `Humidity is ${newAlert.humidityState.toLowerCase()}` : '';
-      newAlert.message = `Warning: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}`;
+      newAlert.message = `Warning: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}. Conditions are suboptimal.`;
     }
 
     // Only update Firebase if the alert status has changed to prevent loops

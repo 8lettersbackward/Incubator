@@ -10,14 +10,15 @@ interface SystemStatusProps {
 
 export default function SystemStatus({ alertSystem }: SystemStatusProps) {
   const getAlertConfig = () => {
-    if (!alertSystem || !alertSystem.status) {
+    if (!alertSystem || !alertSystem.status || alertSystem.status === 'SYSTEM_OK') {
       return {
         bgColor: "bg-green-900/50",
         borderColor: "border-green-400/50",
         textColor: "text-green-300",
         Icon: CheckCircle2,
         title: "System OK",
-        message: "All parameters are within the optimal range."
+        message: alertSystem?.message || "All parameters are within the optimal range.",
+        blink: 'none',
       };
     }
 
@@ -30,7 +31,7 @@ export default function SystemStatus({ alertSystem }: SystemStatusProps) {
           Icon: AlertTriangle,
           title: 'Warning',
           message: alertSystem.message,
-          blink: false,
+          blink: 'slow',
         };
       case 'CRITICAL':
         return {
@@ -40,9 +41,8 @@ export default function SystemStatus({ alertSystem }: SystemStatusProps) {
           Icon: XCircle,
           title: 'Critical Alert',
           message: alertSystem.message,
-          blink: true,
+          blink: 'rapid',
         };
-      case 'SYSTEM_OK':
       default:
         return {
           bgColor: "bg-green-900/50",
@@ -51,7 +51,7 @@ export default function SystemStatus({ alertSystem }: SystemStatusProps) {
           Icon: CheckCircle2,
           title: 'System OK',
           message: alertSystem.message,
-          blink: false,
+          blink: 'none',
         };
     }
   };
@@ -63,7 +63,8 @@ export default function SystemStatus({ alertSystem }: SystemStatusProps) {
       "p-4 rounded-lg border-2 flex gap-4 items-start mb-6 transition-all",
       config.bgColor,
       config.borderColor,
-      config.blink && "animate-pulse"
+      config.blink === 'slow' && "animate-pulse-slow",
+      config.blink === 'rapid' && "animate-pulse-rapid"
     )}>
       <config.Icon className={cn("w-7 h-7 flex-shrink-0", config.textColor)} />
       <div>
