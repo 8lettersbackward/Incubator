@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useIncubator } from "@/contexts/incubator-context";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Minus, Plus } from "lucide-react";
+import { CalendarDays, Minus, Plus, RotateCcw } from "lucide-react";
 
 const presets = [14, 18, 21, 24, 28, 35];
 
 export default function IncubationProgress() {
-  const { data, setIncubationDay, setTotalIncubationDays, isLocked } = useIncubator();
+  const { data, setIncubationDay, setTotalIncubationDays, isLocked, resetIncubation } = useIncubator();
   const { incubationDay, totalIncubationDays, eggType } = data;
 
   const progressPercentage = (incubationDay / totalIncubationDays) * 100;
@@ -72,25 +72,36 @@ export default function IncubationProgress() {
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-4">
+        <div className="space-y-4">
+          <div className="flex items-center justify-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleDayChange(-1)}
+              disabled={isLocked || incubationDay <= 1}
+            >
+              <Minus className="h-4 w-4" />
+              <span className="sr-only">Previous Day</span>
+            </Button>
+            <p className="font-semibold tabular-nums text-sm">Manual Day Adjustment</p>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleDayChange(1)}
+              disabled={isLocked || incubationDay >= totalIncubationDays}
+            >
+              <Plus className="h-4 w-4" />
+              <span className="sr-only">Next Day</span>
+            </Button>
+          </div>
           <Button
             variant="outline"
-            size="icon"
-            onClick={() => handleDayChange(-1)}
-            disabled={isLocked || incubationDay <= 1}
+            className="w-full"
+            onClick={resetIncubation}
+            disabled={isLocked}
           >
-            <Minus className="h-4 w-4" />
-            <span className="sr-only">Previous Day</span>
-          </Button>
-          <p className="font-semibold tabular-nums text-sm">Manual Day Adjustment</p>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => handleDayChange(1)}
-            disabled={isLocked || incubationDay >= totalIncubationDays}
-          >
-            <Plus className="h-4 w-4" />
-            <span className="sr-only">Next Day</span>
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Reset to Day 1
           </Button>
         </div>
       </CardContent>

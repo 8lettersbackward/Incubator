@@ -57,6 +57,7 @@ interface IncubatorContextType {
   setSensorHumidity: (humidity: number) => void;
   setIncubationDay: (day: number) => void;
   setTotalIncubationDays: (days: number) => void;
+  resetIncubation: () => void;
 }
 
 const EGG_INCUBATION_PERIODS: { [key: string]: number } = {
@@ -331,6 +332,24 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const resetIncubation = useCallback(() => {
+    if (isLocked) {
+      toast({
+        variant: "destructive",
+        title: "System Locked",
+        description: "Unlock the system to reset incubation.",
+      });
+      return;
+    }
+    if (!database) return;
+    const dayRef = ref(database, 'incubator/incubationDay');
+    set(dayRef, 1);
+    toast({
+      title: "Incubation Reset",
+      description: `The incubation period has been reset to Day 1.`,
+    });
+  }, [isLocked, toast]);
+
   const unlock = useCallback((pin: string) => {
     return new Promise<boolean>((resolve) => {
       if (pin === accessCode) {
@@ -350,7 +369,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [toast]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setIncubationDay, setTotalIncubationDays };
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setIncubationDay, setTotalIncubationDays, resetIncubation };
 
   return (
     <IncubatorContext.Provider value={value}>
