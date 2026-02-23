@@ -33,19 +33,6 @@ export interface IncubatorData {
   eggType: string;
 }
 
-interface IncubatorContextType {
-  data: IncubatorData;
-  isLocked: boolean;
-  toggleFan: () => void;
-  refillWater: () => void;
-  setEggType: (eggType: string) => void;
-  unlock: (pin: string) => Promise<boolean>;
-  lock: () => void;
-  setAccessCode: (newPin: string) => void;
-  setTargetTemperature: (temp: number) => void;
-  setTargetHumidity: (humidity: number) => void;
-}
-
 // Initial State
 const initialData: IncubatorData = {
   control: {
@@ -69,7 +56,7 @@ const initialData: IncubatorData = {
     temperatureState: 'NORMAL',
     humidityState: 'NORMAL',
     buzzer: false,
-    message: 'Conditions are optimal.',
+    message: 'Incubation Stable',
   },
   eggType: 'Chicken',
 };
