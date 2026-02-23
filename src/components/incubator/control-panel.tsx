@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useIncubator } from "@/contexts/incubator-context";
-import { LockIcon, KeyRound, Bird } from "lucide-react";
+import { LockIcon, KeyRound, Bird, Thermometer, Droplets } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import UnlockDialog from "./unlock-dialog";
@@ -14,6 +14,7 @@ import SystemStatus from "./system-status";
 
 export default function ControlPanel() {
   const { data, isLocked, lock, setEggType } = useIncubator();
+  const { sensors } = data;
 
   return (
     <Card className="h-full overflow-hidden">
@@ -41,6 +42,30 @@ export default function ControlPanel() {
             isLocked && "blur-sm opacity-50 pointer-events-none"
           )}
         >
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                    <Thermometer className="w-6 h-6 text-primary mt-1" />
+                    <div>
+                        <Label className="font-medium text-base">Temperature</Label>
+                        <p className="text-xs text-muted-foreground">Optimal: 37.5°C</p>
+                    </div>
+                </div>
+                <p className="font-bold text-2xl text-right">{sensors.temperature.toFixed(1)}°C</p>
+            </div>
+            <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                    <Droplets className="w-6 h-6 text-primary mt-1" />
+                    <div>
+                        <Label className="font-medium text-base">Humidity</Label>
+                        <p className="text-xs text-muted-foreground">Optimal: 40-60%</p>
+                    </div>
+                </div>
+                <p className="font-bold text-2xl text-right">{sensors.humidity}%</p>
+            </div>
+          </div>
+          <Separator />
+
           <SystemStatus alertSystem={data.alertSystem} />
           
           <div className="flex items-center justify-between">
