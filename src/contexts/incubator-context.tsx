@@ -18,6 +18,7 @@ export interface IncubatorData {
     signal: number;
   };
   camera: {
+    isOn: boolean;
     quality: string;
     fps: number;
     dataUsage: string;
@@ -52,6 +53,7 @@ const initialData: IncubatorData = {
     signal: 92,
   },
   camera: {
+    isOn: true,
     quality: '1080p',
     fps: 30,
     dataUsage: '2.1 MB/s',
