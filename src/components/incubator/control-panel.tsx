@@ -11,10 +11,11 @@ import { Button } from "../ui/button";
 import AccessCodeDialog from "./access-code-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import SystemStatus from "./system-status";
+import EnvironmentSlider from "./environment-slider";
 
 export default function ControlPanel() {
   const { data, isLocked, lock, setEggType } = useIncubator();
-  const { sensors } = data;
+  const { sensors, alertSystem } = data;
 
   return (
     <Card className="h-full overflow-hidden">
@@ -43,26 +44,28 @@ export default function ControlPanel() {
           )}
         >
           <div className="space-y-4">
-            <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                    <Thermometer className="w-6 h-6 text-primary mt-1" />
-                    <div>
-                        <Label className="font-medium text-base">Temperature</Label>
-                        <p className="text-xs text-muted-foreground">Optimal: 37.5°C</p>
-                    </div>
-                </div>
-                <p className="font-bold text-2xl text-right">{sensors.temperature.toFixed(1)}°C</p>
-            </div>
-            <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                    <Droplets className="w-6 h-6 text-primary mt-1" />
-                    <div>
-                        <Label className="font-medium text-base">Humidity</Label>
-                        <p className="text-xs text-muted-foreground">Optimal: 40-60%</p>
-                    </div>
-                </div>
-                <p className="font-bold text-2xl text-right">{sensors.humidity}%</p>
-            </div>
+            <EnvironmentSlider
+              label="Temperature"
+              icon={<Thermometer className="w-5 h-5 text-primary" />}
+              value={sensors.temperature}
+              min={30}
+              max={45}
+              safeMin={37.0}
+              safeMax={38.0}
+              unit="°C"
+              isSafe={alertSystem.temperatureState === 'NORMAL'}
+            />
+            <EnvironmentSlider
+              label="Humidity"
+              icon={<Droplets className="w-5 h-5 text-primary" />}
+              value={sensors.humidity}
+              min={20}
+              max={80}
+              safeMin={40}
+              safeMax={60}
+              unit="%"
+              isSafe={alertSystem.humidityState === 'NORMAL'}
+            />
           </div>
           <Separator />
 
