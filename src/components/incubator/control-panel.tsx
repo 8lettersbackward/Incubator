@@ -1,11 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useIncubator } from "@/contexts/incubator-context";
 import { Fan, Thermometer, Droplets, Bell, LockIcon, KeyRound, Bird } from "lucide-react";
-import EnvironmentSlider from "./environment-slider";
+import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import StatusIndicator from "../shared/status-indicator";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,19 @@ import AccessCodeDialog from "./access-code-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ControlPanel() {
-  const { data, toggleFan, isLocked, lock, setEggType } = useIncubator();
+  const { data, toggleFan, isLocked, lock, setEggType, setTargetTemperature, setTargetHumidity } = useIncubator();
+
+  const [tempTarget, setTempTarget] = useState(data.control.targetTemperature);
+  const [humidityTarget, setHumidityTarget] = useState(data.control.targetHumidity);
+
+  useEffect(() => {
+    setTempTarget(data.control.targetTemperature);
+  }, [data.control.targetTemperature]);
+
+  useEffect(() => {
+    setHumidityTarget(data.control.targetHumidity);
+  }, [data.control.targetHumidity]);
+
 
   // Define safe ranges for chicken eggs as a default
   const tempSafeMin = 37.0;
@@ -52,28 +65,55 @@ export default function ControlPanel() {
             isLocked && "blur-sm opacity-50 pointer-events-none"
           )}
         >
-          <EnvironmentSlider
-            label="Temperature"
-            icon={<Thermometer className="w-5 h-5 text-muted-foreground" />}
-            value={data.sensors.temperature}
-            min={30}
-            max={45}
-            safeMin={tempSafeMin}
-            safeMax={tempSafeMax}
-            unit="°C"
-            isSafe={tempIsSafe}
-          />
-          <EnvironmentSlider
-            label="Humidity"
-            icon={<Droplets className="w-5 h-5 text-muted-foreground" />}
-            value={data.sensors.humidity}
-            min={40}
-            max={80}
-            safeMin={humiditySafeMin}
-            safeMax={humiditySafeMax}
-            unit="%"
-            isSafe={humidityIsSafe}
-          />
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+                <Label className="flex items-center gap-2">
+                    <Thermometer className="w-5 h-5 text-muted-foreground" />
+                    <span>Temperature</span>
+                </Label>
+                <span className={cn("font-bold text-lg", !tempIsSafe && "text-destructive animate-pulse")}>
+                    {data.sensors.temperature.toFixed(1)}°C
+                </span>
+            </div>
+            <div className="flex items-center gap-2">
+                <Slider
+                    value={[tempTarget]}
+                    onValueChange={(value) => setTempTarget(value[0])}
+                    onValueCommit={(value) => setTargetTemperature(value[0])}
+                    min={30}
+                    max={45}
+                    step={0.1}
+                    disabled={isLocked}
+                    className="flex-1"
+                />
+                <span className="text-sm font-medium w-16 text-right tabular-nums">{tempTarget.toFixed(1)}°C</span>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+                <Label className="flex items-center gap-2">
+                    <Droplets className="w-5 h-5 text-muted-foreground" />
+                    <span>Humidity</span>
+                </Label>
+                <span className={cn("font-bold text-lg", !humidityIsSafe && "text-destructive animate-pulse")}>
+                    {data.sensors.humidity.toFixed(1)}%
+                </span>
+            </div>
+            <div className="flex items-center gap-2">
+                <Slider
+                    value={[humidityTarget]}
+                    onValueChange={(value) => setHumidityTarget(value[0])}
+                    onValueCommit={(value) => setTargetHumidity(value[0])}
+                    min={40}
+                    max={80}
+                    step={1}
+                    disabled={isLocked}
+                    className="flex-1"
+                />
+                <span className="text-sm font-medium w-16 text-right tabular-nums">{humidityTarget.toFixed(0)}%</span>
+            </div>
+          </div>
           
           <Separator />
 

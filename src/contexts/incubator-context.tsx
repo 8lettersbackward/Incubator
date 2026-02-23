@@ -12,6 +12,8 @@ export interface IncubatorData {
     fan: boolean;
     motor: boolean;
     humidityControl: boolean;
+    targetTemperature: number;
+    targetHumidity: number;
   };
   sensors: {
     temperature: number;
@@ -37,6 +39,8 @@ interface IncubatorContextType {
   unlock: (pin: string) => Promise<boolean>;
   lock: () => void;
   setAccessCode: (newPin: string) => void;
+  setTargetTemperature: (temp: number) => void;
+  setTargetHumidity: (humidity: number) => void;
 }
 
 // Initial State
@@ -46,6 +50,8 @@ const initialData: IncubatorData = {
     fan: false,
     motor: false,
     humidityControl: false,
+    targetTemperature: 37.5,
+    targetHumidity: 60,
   },
   sensors: {
     temperature: 0,
@@ -116,6 +122,14 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const toggleFan = useCallback(() => {
     setControlValue('fan', !data.control.fan)
   }, [setControlValue, data.control.fan]);
+  
+  const setTargetTemperature = useCallback((temp: number) => {
+    setControlValue('targetTemperature', temp);
+  }, [setControlValue]);
+
+  const setTargetHumidity = useCallback((humidity: number) => {
+    setControlValue('targetHumidity', humidity);
+  }, [setControlValue]);
 
   const refillWater = useCallback(() => {
     if (isLocked) {
@@ -173,7 +187,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [toast]);
 
-  const value = { data, isLocked, toggleFan, refillWater, setEggType, unlock, lock, setAccessCode };
+  const value = { data, isLocked, toggleFan, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity };
 
   return (
     <IncubatorContext.Provider value={value}>
