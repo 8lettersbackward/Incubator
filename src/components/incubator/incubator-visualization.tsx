@@ -36,7 +36,7 @@ export default function IncubatorVisualization() {
                 <StatusIndicator label="Ventilation" isActive={data.control.fan} />
                 <StatusIndicator label="Turning" isActive={data.control.motor} activeColor="bg-blue-500" />
                 <StatusIndicator label="Water" isActive={data.sensors.waterLevel !== 'LOW'} />
-                <StatusIndicator label="Device" isActive={data.status.deviceOnline} />
+                <StatusIndicator label="Camera" isActive={data.status.deviceOnline} />
                 <StatusIndicator label="WiFi" isActive={data.status.wifiConnected} />
             </div>
         </div>
