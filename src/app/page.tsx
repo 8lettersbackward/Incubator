@@ -7,6 +7,7 @@ import WaterManagement from '@/components/incubator/water-management';
 import CameraConnectivity from '@/components/incubator/camera-connectivity';
 import ComponentsGuide from '@/components/incubator/components-guide';
 import SystemControls from '@/components/incubator/system-controls';
+import IncubationProgress from '@/components/incubator/incubation-progress';
 
 export default function Home() {
   return (
@@ -24,8 +25,9 @@ export default function Home() {
             <WaterManagement />
             <CameraConnectivity />
           </div>
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
             <SystemControls />
+            <IncubationProgress />
           </div>
           <div className="lg:col-span-4">
             <ComponentsGuide />

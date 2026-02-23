@@ -25,11 +25,13 @@ export interface IncubatorData {
     eggsTurned: boolean;
   };
   eggType: string;
+  incubationDay: number;
 }
 
 interface IncubatorContextType {
   data: IncubatorData;
   isLocked: boolean;
+  totalIncubationDays: number;
   toggleFan: () => void;
   toggleHeater: () => void;
   toggleMotor: () => void;
@@ -42,6 +44,7 @@ interface IncubatorContextType {
   setAccessCode: (pin: string) => void;
   setTargetTemperature: (temp: number) => void;
   setTargetHumidity: (humidity: number) => void;
+  setIncubationDay: (day: number) => void;
 }
 
 
@@ -65,6 +68,7 @@ const initialData: IncubatorData = {
     eggsTurned: false,
   },
   eggType: 'Chicken',
+  incubationDay: 1,
 };
 
 const IncubatorContext = createContext<IncubatorContextType | undefined>(undefined);
@@ -74,6 +78,15 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const [isLocked, setIsLocked] = useState(true);
   const [accessCode, setAccessCode] = useState('1234'); // Default PIN
   const { toast } = useToast();
+
+  const EGG_INCUBATION_PERIODS: { [key: string]: number } = {
+    Chicken: 21,
+    Duck: 28,
+    Quail: 18,
+    Turkey: 28,
+  };
+
+  const totalIncubationDays = EGG_INCUBATION_PERIODS[data.eggType] || 21;
 
   useEffect(() => {
     if (!database) {
@@ -95,7 +108,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
             sensors: { ...prev.sensors, ...dbData.sensors },
         }));
       } else {
-        const { eggType, ...rest } = initialData;
+        const { eggType, incubationDay, ...rest } = initialData;
         set(incubatorRef, rest);
       }
     });
@@ -184,8 +197,22 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       });
       return;
     }
-    setData(prev => ({...prev, eggType}));
+    setData(prev => ({...prev, eggType, incubationDay: 1}));
   }, [isLocked, toast]);
+
+  const setIncubationDay = useCallback((day: number) => {
+    if (isLocked) {
+      toast({
+        variant: "destructive",
+        title: "System Locked",
+        description: "Unlock the system to adjust incubation day.",
+      });
+      return;
+    }
+    if (day >= 1 && day <= totalIncubationDays) {
+      setData(prev => ({ ...prev, incubationDay: day }));
+    }
+  }, [isLocked, toast, totalIncubationDays]);
 
   const unlock = useCallback((pin: string) => {
     return new Promise<boolean>((resolve) => {
@@ -206,7 +233,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [toast]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity };
+  const value = { data, isLocked, totalIncubationDays, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setIncubationDay };
 
   return (
     <IncubatorContext.Provider value={value}>
