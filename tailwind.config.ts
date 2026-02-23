@@ -88,17 +88,12 @@ export default {
             height: '0',
           },
         },
-        'slow-rotate': {
-          from: { transform: 'rotate(0deg)' },
-          to: { transform: 'rotate(180deg)' },
-        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'pulse-rapid': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'slow-rotate': 'slow-rotate 60s linear forwards',
       },
     },
   },

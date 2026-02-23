@@ -30,7 +30,6 @@ export interface IncubatorData {
     humidity: number;
     waterLevel: string;
     waterPercent: number;
-    eggsTurned: boolean;
   };
   alertSystem: AlertSystem;
   eggType: string;
@@ -86,7 +85,6 @@ const initialData: IncubatorData = {
     humidity: 55,
     waterLevel: "HIGH",
     waterPercent: 80,
-    eggsTurned: false,
   },
   alertSystem: {
     status: "SYSTEM_OK",
