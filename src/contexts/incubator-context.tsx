@@ -34,6 +34,7 @@ interface IncubatorContextType {
   data: IncubatorData;
   isLocked: boolean;
   unlock: (pin: string) => Promise<boolean>;
+  lock: () => void;
   resetInactivityTimer: () => void;
   toggleHeater: () => void;
   toggleFan: () => void;
@@ -208,7 +209,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     resetInactivityTimer();
   }, [resetInactivityTimer]);
 
-  const value = { data, isLocked: data.status.systemLocked, unlock, resetInactivityTimer, toggleHeater, toggleFan, manualTurn, emergencyStop, refillWater, toggleHumidityControl, setAccessCode, setEggType };
+  const value = { data, isLocked: data.status.systemLocked, unlock, lock, resetInactivityTimer, toggleHeater, toggleFan, manualTurn, emergencyStop, refillWater, toggleHumidityControl, setAccessCode, setEggType };
 
   return (
     <IncubatorContext.Provider value={value}>
