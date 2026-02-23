@@ -45,19 +45,9 @@ const statusConfig: {
 
 export default function SystemStatus() {
   const { data } = useIncubator();
-  const { tempAlert, humidityAlert, balanceAlert } = data.status;
-
-  const getSystemStatus = (): SystemStatusType => {
-    if (tempAlert !== 'OK' || humidityAlert !== 'OK') {
-      return 'Critical';
-    }
-    if (balanceAlert !== 'OK') {
-      return 'Warning';
-    }
-    return 'OK';
-  };
-
-  const status = getSystemStatus();
+  
+  const status: SystemStatusType = data.alertSystem?.status || 'OK';
+  const message = data.alertSystem?.message || statusConfig[status].description;
   const config = statusConfig[status];
   const Icon = config.icon;
 
@@ -66,7 +56,7 @@ export default function SystemStatus() {
       <Icon className={cn('h-7 w-7 shrink-0', config.iconClass, config.animation)} />
       <div>
         <h4 className={cn('font-semibold', config.iconClass)}>{config.label}</h4>
-        <p className="text-sm text-muted-foreground">{config.description}</p>
+        <p className="text-sm text-muted-foreground">{message}</p>
       </div>
     </div>
   );

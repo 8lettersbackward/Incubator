@@ -25,9 +25,10 @@ export interface IncubatorData {
     deviceOnline: boolean;
     wifiConnected: boolean;
     buzzerActive: boolean;
-    tempAlert: 'OK' | 'LOW' | 'HIGH';
-    humidityAlert: 'OK' | 'LOW' | 'HIGH';
-    balanceAlert: 'OK' | 'UNBALANCED';
+  };
+  alertSystem: {
+    status: 'OK' | 'Warning' | 'Critical';
+    message: string;
   };
   eggType: string;
 }
@@ -65,9 +66,10 @@ const initialData: IncubatorData = {
     deviceOnline: false,
     wifiConnected: false,
     buzzerActive: false,
-    tempAlert: 'OK',
-    humidityAlert: 'OK',
-    balanceAlert: 'OK',
+  },
+  alertSystem: {
+    status: 'OK',
+    message: 'Conditions are optimal.',
   },
   eggType: 'Chicken',
 };
@@ -99,6 +101,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
             control: { ...initialData.control, ...dbData.control },
             sensors: { ...initialData.sensors, ...dbData.sensors },
             status: { ...initialData.status, ...dbData.status },
+            alertSystem: { ...initialData.alertSystem, ...dbData.alertSystem },
         }));
       } else {
         const { eggType, ...rest } = initialData;
