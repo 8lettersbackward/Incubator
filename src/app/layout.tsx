@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'OvumView Console',
+  title: 'Eggcelent',
   description: 'Smart Egg Incubator IoT Dashboard',
 };
 
