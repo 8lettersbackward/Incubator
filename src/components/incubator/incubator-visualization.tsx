@@ -18,7 +18,8 @@ const EggTray = ({ eggCount }: { eggCount: number }) => (
 
 export default function IncubatorVisualization() {
   const { data } = useIncubator();
-  const { numberOfEggs = 0, control, sensors } = data;
+  const { control, sensors, status, incubation } = data;
+  const { numberOfEggs = 0, eggType } = incubation;
 
   const tray1Eggs = Math.min(numberOfEggs, 56);
   const tray2Eggs = Math.max(0, numberOfEggs - 56);
@@ -30,27 +31,27 @@ export default function IncubatorVisualization() {
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
             <div className="flex items-end gap-2 sm:gap-4">
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary tracking-tighter">
-                    {data.sensors.temperature.toFixed(1)}°C
+                    {sensors.temperature.toFixed(1)}°C
                 </h2>
                 <p className="text-xl sm:text-2xl md:text-3xl font-medium text-accent tracking-tighter mb-0.5 sm:mb-1">
-                    {data.sensors.humidity}% RH
+                    {sensors.humidity}% RH
                 </p>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-x-3 gap-y-2 text-xs">
-                <StatusIndicator label="Heat Lamp" isActive={data.control.heater} />
-                <StatusIndicator label="Ventilation" isActive={data.control.fan} />
-                <StatusIndicator label="Turning" isActive={data.control.motor} activeColor="bg-blue-500" />
-                <StatusIndicator label={`Water ${data.sensors.waterPercent}%`} isActive={data.sensors.waterPercent > 5} />
-                <StatusIndicator label="Camera On" isActive={data.control.cameraOn} />
-                <StatusIndicator label="WiFi Connected" isActive={data.control.wifiConnected} />
+                <StatusIndicator label="Heat Lamp" isActive={control.heater} />
+                <StatusIndicator label="Ventilation" isActive={control.fan} />
+                <StatusIndicator label="Turning" isActive={control.motor} activeColor="bg-blue-500" />
+                <StatusIndicator label={`Water ${sensors.waterPercent}%`} isActive={sensors.waterPercent > 5} />
+                <StatusIndicator label="Camera On" isActive={control.cameraOn} />
+                <StatusIndicator label="WiFi Connected" isActive={status.wifiConnected} />
             </div>
         </div>
 
         <div className="flex-1 relative bg-black/20 border border-border rounded-lg p-4 flex flex-col items-center justify-center gap-4">
           {/* Top components */}
           <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
-            <Lightbulb className={cn("w-8 h-8 text-muted-foreground transition-all", data.control.heater && "text-yellow-400 drop-shadow-[0_0_8px_theme(colors.yellow.400)]")} />
-            <Fan className={cn("w-8 h-8 text-muted-foreground transition-all", data.control.fan && "animate-spin text-accent")} />
+            <Lightbulb className={cn("w-8 h-8 text-muted-foreground transition-all", control.heater && "text-yellow-400 drop-shadow-[0_0_8px_theme(colors.yellow.400)]")} />
+            <Fan className={cn("w-8 h-8 text-muted-foreground transition-all", control.fan && "animate-spin text-accent")} />
           </div>
           
           {/* Egg Trays */}
@@ -60,7 +61,7 @@ export default function IncubatorVisualization() {
           </div>
 
           <div className="absolute bottom-2 right-4 text-xs font-mono text-muted-foreground">
-            {`EGGS: ${numberOfEggs} / 112 | TYPE: ${(data.eggType || "").toUpperCase()}`}
+            {`EGGS: ${numberOfEggs} / 112 | TYPE: ${(eggType || "").toUpperCase()}`}
           </div>
         </div>
       </CardContent>

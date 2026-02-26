@@ -17,7 +17,8 @@ import { useEffect, useState } from "react";
 
 export default function ControlPanel() {
   const { data, isLocked, lock, setEggType, setSensorTemperature, setSensorHumidity, setNumberOfEggs } = useIncubator();
-  const { sensors, alertSystem, numberOfEggs } = data;
+  const { sensors, alertSystem, incubation } = data;
+  const { numberOfEggs, eggType } = incubation;
   const [eggInput, setEggInput] = useState(String(numberOfEggs || ''));
 
   useEffect(() => {
@@ -174,7 +175,7 @@ export default function ControlPanel() {
               Egg Type
             </Label>
             <Select
-              value={data.eggType}
+              value={eggType}
               onValueChange={setEggType}
               disabled={isLocked}
             >

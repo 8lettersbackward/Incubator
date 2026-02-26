@@ -9,18 +9,18 @@ import { CalendarDays, Minus, Plus, RotateCcw } from "lucide-react";
 const presets = [14, 18, 21, 24, 28, 35];
 
 export default function IncubationProgress() {
-  const { data, setIncubationDay, setTotalIncubationDays, isLocked, resetIncubation } = useIncubator();
-  const { incubationDay, totalIncubationDays, eggType } = data;
+  const { data, setCurrentDay, setTotalDays, isLocked, resetIncubation } = useIncubator();
+  const { currentDay, totalDays, eggType } = data.incubation;
 
-  const progressPercentage = (incubationDay / totalIncubationDays) * 100;
-  const remainingDays = totalIncubationDays - incubationDay;
+  const progressPercentage = (currentDay / totalDays) * 100;
+  const remainingDays = totalDays - currentDay;
 
   const handleDayChange = (change: number) => {
-    setIncubationDay(incubationDay + change);
+    setCurrentDay(currentDay + change);
   };
 
   const handlePresetClick = (days: number) => {
-    setTotalIncubationDays(days);
+    setTotalDays(days);
   };
 
   const getRemainingDaysText = () => {
@@ -43,7 +43,7 @@ export default function IncubationProgress() {
       </CardHeader>
       <CardContent className="space-y-6 pt-2">
         <div className="text-center">
-            <p className="text-2xl font-bold">{incubationDay}<span className="text-base font-normal text-muted-foreground">/{totalIncubationDays} days</span></p>
+            <p className="text-2xl font-bold">{currentDay}<span className="text-base font-normal text-muted-foreground">/{totalDays} days</span></p>
             <p className="text-sm text-primary font-medium">{getRemainingDaysText()}</p>
         </div>
         
@@ -51,7 +51,7 @@ export default function IncubationProgress() {
           <Progress value={progressPercentage} className="h-3" />
           <div className="mt-2 flex justify-between text-xs text-muted-foreground">
             <span>Day 1</span>
-            <span>Day {totalIncubationDays}</span>
+            <span>Day {totalDays}</span>
           </div>
         </div>
         
@@ -61,7 +61,7 @@ export default function IncubationProgress() {
             {presets.map((days) => (
               <Button
                 key={days}
-                variant={totalIncubationDays === days ? "default" : "outline"}
+                variant={totalDays === days ? "default" : "outline"}
                 size="sm"
                 onClick={() => handlePresetClick(days)}
                 disabled={isLocked}
@@ -78,7 +78,7 @@ export default function IncubationProgress() {
               variant="outline"
               size="icon"
               onClick={() => handleDayChange(-1)}
-              disabled={isLocked || incubationDay <= 1}
+              disabled={isLocked || currentDay <= 1}
             >
               <Minus className="h-4 w-4" />
               <span className="sr-only">Previous Day</span>
@@ -88,7 +88,7 @@ export default function IncubationProgress() {
               variant="outline"
               size="icon"
               onClick={() => handleDayChange(1)}
-              disabled={isLocked || incubationDay >= totalIncubationDays}
+              disabled={isLocked || currentDay >= totalDays}
             >
               <Plus className="h-4 w-4" />
               <span className="sr-only">Next Day</span>

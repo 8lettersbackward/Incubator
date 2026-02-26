@@ -15,15 +15,17 @@ export interface AlertSystem {
 }
 
 export interface IncubatorData {
+  status: {
+    deviceOnline: boolean;
+    wifiConnected: boolean;
+  };
   control: {
     heater: boolean;
     fan: boolean;
     motor: boolean;
-    humidityControl: boolean;
+    cameraOn: boolean;
     targetTemperature: number;
     targetHumidity: number;
-    cameraOn: boolean;
-    wifiConnected: boolean;
   };
   sensors: {
     temperature: number;
@@ -32,10 +34,12 @@ export interface IncubatorData {
     waterPercent: number;
   };
   alertSystem: AlertSystem;
-  eggType: string;
-  incubationDay: number;
-  totalIncubationDays: number;
-  numberOfEggs: number;
+  incubation: {
+    eggType: string;
+    numberOfEggs: number;
+    currentDay: number;
+    totalDays: number;
+  };
 }
 
 interface IncubatorContextType {
@@ -55,8 +59,8 @@ interface IncubatorContextType {
   setTargetHumidity: (humidity: number) => void;
   setSensorTemperature: (temp: number) => void;
   setSensorHumidity: (humidity: number) => void;
-  setIncubationDay: (day: number) => void;
-  setTotalIncubationDays: (days: number) => void;
+  setCurrentDay: (day: number) => void;
+  setTotalDays: (days: number) => void;
   resetIncubation: () => void;
   setNumberOfEggs: (count: number) => void;
 }
@@ -70,15 +74,17 @@ const EGG_INCUBATION_PERIODS: { [key: string]: number } = {
 
 // Initial State
 const initialData: IncubatorData = {
+  status: {
+    deviceOnline: true,
+    wifiConnected: true,
+  },
   control: {
     heater: false,
     fan: false,
     motor: false,
-    humidityControl: false,
+    cameraOn: true,
     targetTemperature: 37.5,
     targetHumidity: 55,
-    cameraOn: true,
-    wifiConnected: true,
   },
   sensors: {
     temperature: 37.5,
@@ -93,10 +99,12 @@ const initialData: IncubatorData = {
     buzzer: false,
     message: "System stable. Optimal conditions.",
   },
-  eggType: 'Chicken',
-  incubationDay: 1,
-  totalIncubationDays: EGG_INCUBATION_PERIODS['Chicken'],
-  numberOfEggs: 56,
+  incubation: {
+    eggType: 'Chicken',
+    numberOfEggs: 56,
+    currentDay: 1,
+    totalDays: EGG_INCUBATION_PERIODS['Chicken'],
+  },
 };
 
 const IncubatorContext = createContext<IncubatorContextType | undefined>(undefined);
@@ -205,6 +213,21 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     return true;
   }, [isLocked, toast]);
   
+  const setStatusValue = useCallback((key: string, value: any) => {
+    if (isLocked) {
+      toast({
+        variant: "destructive",
+        title: "System Locked",
+        description: "Unlock the system to make changes.",
+      });
+      return false;
+    }
+    if (!database) return false;
+    const statusRef = ref(database, `incubator/status/${key}`);
+    set(statusRef, value);
+    return true;
+  }, [isLocked, toast]);
+
   const setSensorValue = useCallback((key: string, value: any) => {
     if (isLocked) {
       toast({
@@ -245,8 +268,8 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   }, [setControlValue, data.control.cameraOn]);
 
   const toggleWifi = useCallback(() => {
-    setControlValue('wifiConnected', !data.control.wifiConnected);
-  }, [setControlValue, data.control.wifiConnected]);
+    setStatusValue('wifiConnected', !data.status.wifiConnected);
+  }, [setStatusValue, data.status.wifiConnected]);
   
   const setTargetTemperature = useCallback((temp: number) => {
     setControlValue('targetTemperature', temp);
@@ -297,15 +320,15 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     }
     if (!database) return;
     const newTotalDays = EGG_INCUBATION_PERIODS[eggType] || 21;
-    const incubatorRef = ref(database, 'incubator');
-    update(incubatorRef, {
+    const incubationRef = ref(database, 'incubator/incubation');
+    update(incubationRef, {
       eggType: eggType,
-      incubationDay: 1,
-      totalIncubationDays: newTotalDays
+      currentDay: 1,
+      totalDays: newTotalDays
     });
   }, [isLocked, toast]);
 
-  const setIncubationDay = useCallback((day: number) => {
+  const setCurrentDay = useCallback((day: number) => {
     if (isLocked) {
       toast({
         variant: "destructive",
@@ -314,14 +337,14 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       });
       return;
     }
-    if (day >= 1 && day <= data.totalIncubationDays) {
+    if (day >= 1 && day <= data.incubation.totalDays) {
       if (!database) return;
-      const dayRef = ref(database, 'incubator/incubationDay');
+      const dayRef = ref(database, 'incubator/incubation/currentDay');
       set(dayRef, day);
     }
-  }, [isLocked, toast, data.totalIncubationDays]);
+  }, [isLocked, toast, data.incubation.totalDays]);
 
-  const setTotalIncubationDays = (days: number) => {
+  const setTotalDays = (days: number) => {
     if (isLocked) {
       toast({
         variant: "destructive",
@@ -331,10 +354,10 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     if (!database) return;
-    const incubatorRef = ref(database, 'incubator');
-    update(incubatorRef, {
-      totalIncubationDays: days,
-      incubationDay: 1
+    const incubationRef = ref(database, 'incubator/incubation');
+    update(incubationRef, {
+      totalDays: days,
+      currentDay: 1
     });
   };
 
@@ -348,7 +371,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     if (!database) return;
-    const dayRef = ref(database, 'incubator/incubationDay');
+    const dayRef = ref(database, 'incubator/incubation/currentDay');
     set(dayRef, 1);
     toast({
       title: "Incubation Reset",
@@ -374,7 +397,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       });
       return;
     }
-    const eggsRef = ref(database, 'incubator/numberOfEggs');
+    const eggsRef = ref(database, 'incubator/incubation/numberOfEggs');
     set(eggsRef, count);
   }, [isLocked, toast]);
 
@@ -397,7 +420,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [toast]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setIncubationDay, setTotalIncubationDays, resetIncubation, setNumberOfEggs };
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, setNumberOfEggs };
 
   return (
     <IncubatorContext.Provider value={value}>

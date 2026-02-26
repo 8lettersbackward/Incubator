@@ -56,7 +56,7 @@ export default function SystemControls() {
             icon: <Wifi className="w-6 h-6 text-primary" />,
             label: "WiFi",
             description: "Connectivity status",
-            checked: data.control.wifiConnected,
+            checked: data.status.wifiConnected,
             onCheckedChange: toggleWifi,
         },
     ];
