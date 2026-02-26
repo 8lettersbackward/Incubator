@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
@@ -133,9 +134,17 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     const incubatorRef = ref(database, 'incubator');
     const unsubscribe = onValue(incubatorRef, (snapshot) => {
       if (snapshot.exists()) {
-        setData(snapshot.val());
+        const remoteData = snapshot.val() || {};
+        setData({
+          status: { ...initialData.status, ...(remoteData.status || {}) },
+          control: { ...initialData.control, ...(remoteData.control || {}) },
+          sensors: { ...initialData.sensors, ...(remoteData.sensors || {}) },
+          alertSystem: { ...initialData.alertSystem, ...(remoteData.alertSystem || {}) },
+          incubation: { ...initialData.incubation, ...(remoteData.incubation || {}) },
+        });
       } else {
         set(incubatorRef, initialData);
+        setData(initialData);
       }
     });
     return () => unsubscribe();
@@ -269,7 +278,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
 
   const toggleWifi = useCallback(() => {
     setStatusValue('wifiConnected', !data.status.wifiConnected);
-  }, [setStatusValue, data.status.wifiConnected]);
+  }, [setStatusValue, data.status]);
   
   const setTargetTemperature = useCallback((temp: number) => {
     setControlValue('targetTemperature', temp);
@@ -436,3 +445,5 @@ export const useIncubator = (): IncubatorContextType => {
   }
   return context;
 };
+
+    
