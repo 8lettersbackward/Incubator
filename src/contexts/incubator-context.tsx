@@ -59,6 +59,7 @@ interface IncubatorContextType {
   setTotalIncubationDays: (days: number) => void;
   resetIncubation: () => void;
   setNumberOfEggs: (count: number) => void;
+  resetDatabase: () => void;
 }
 
 const EGG_INCUBATION_PERIODS: { [key: string]: number } = {
@@ -397,7 +398,33 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [toast]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setIncubationDay, setTotalIncubationDays, resetIncubation, setNumberOfEggs };
+  const resetDatabase = useCallback(() => {
+    if (isLocked) {
+      toast({
+        variant: "destructive",
+        title: "System Locked",
+        description: "Unlock the system to reset the database.",
+      });
+      return;
+    }
+    if (!database) {
+        toast({
+            variant: "destructive",
+            title: "Database Error",
+            description: "Could not connect to the database to reset.",
+        });
+        return;
+    };
+    const incubatorRef = ref(database, 'incubator');
+    set(incubatorRef, initialData).then(() => {
+      toast({
+        title: "Database Reset Successful",
+        description: "The incubator data has been reset to its default state.",
+      });
+    });
+  }, [isLocked, toast]);
+
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setIncubationDay, setTotalIncubationDays, resetIncubation, setNumberOfEggs, resetDatabase };
 
   return (
     <IncubatorContext.Provider value={value}>

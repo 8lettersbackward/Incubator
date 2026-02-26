@@ -14,6 +14,7 @@ import SystemStatus from "./system-status";
 import EnvironmentSlider from "./environment-slider";
 import { Input } from "../ui/input";
 import { useEffect, useState } from "react";
+import ResetDatabaseDialog from "./reset-database-dialog";
 
 export default function ControlPanel() {
   const { data, isLocked, lock, setEggType, setSensorTemperature, setSensorHumidity, setNumberOfEggs } = useIncubator();
@@ -192,15 +193,18 @@ export default function ControlPanel() {
 
            <Separator />
 
-            <div className="flex flex-col sm:flex-row justify-between gap-2">
-                <Button variant="outline" onClick={lock} className="w-full">
-                    <LockIcon className="mr-2" /> Lock Controls
-                </Button>
-                <AccessCodeDialog>
-                    <Button variant="secondary" className="w-full">
-                        <KeyRound className="mr-2" /> Change PIN
-                    </Button>
-                </AccessCodeDialog>
+            <div className="space-y-2">
+              <div className="flex flex-col sm:flex-row justify-between gap-2">
+                  <Button variant="outline" onClick={lock} className="w-full">
+                      <LockIcon className="mr-2" /> Lock Controls
+                  </Button>
+                  <AccessCodeDialog>
+                      <Button variant="secondary" className="w-full">
+                          <KeyRound className="mr-2" /> Change PIN
+                      </Button>
+                  </AccessCodeDialog>
+              </div>
+              <ResetDatabaseDialog />
             </div>
         </CardContent>
       </div>
