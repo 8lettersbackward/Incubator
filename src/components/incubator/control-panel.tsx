@@ -14,7 +14,6 @@ import SystemStatus from "./system-status";
 import EnvironmentSlider from "./environment-slider";
 import { Input } from "../ui/input";
 import { useEffect, useState } from "react";
-import ResetDatabaseDialog from "./reset-database-dialog";
 
 export default function ControlPanel() {
   const { data, isLocked, lock, setEggType, setSensorTemperature, setSensorHumidity, setNumberOfEggs } = useIncubator();
@@ -204,7 +203,6 @@ export default function ControlPanel() {
                       </Button>
                   </AccessCodeDialog>
               </div>
-              <ResetDatabaseDialog />
             </div>
         </CardContent>
       </div>
