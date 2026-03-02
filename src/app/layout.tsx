@@ -9,7 +9,6 @@ import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-regis
 export const metadata: Metadata = {
   title: "Eggcelent",
   description: "Smart Egg Incubator IoT Dashboard",
-  manifest: "/manifest.json",
   themeColor: "#2e7d32",
 };
 
@@ -21,7 +20,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
-        <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#2e7d32" />
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
