@@ -3,6 +3,7 @@ import './globals.css';
 import { IncubatorProvider } from '@/contexts/incubator-context';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { ServiceWorkerRegistration } from '@/components/pwa/service-worker-registration';
 
 export const metadata: Metadata = {
   title: 'Eggcelent',
@@ -17,6 +18,8 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#2e7d32" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -29,6 +32,7 @@ export default function RootLayout({
           {children}
           <Toaster />
         </IncubatorProvider>
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );
