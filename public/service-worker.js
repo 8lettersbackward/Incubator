@@ -1,16 +1,20 @@
-const CACHE_NAME = 'eggcelent-cache-v1';
+const CACHE_NAME = 'egg-incubator-cache-v1';
 const urlsToCache = [
   '/',
-  '/manifest.json'
+  '/manifest.json',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
-        return cache.addAll(urlsToCache);
+        // It's fine if some of these fail, especially the icons if they don't exist yet.
+        return Promise.all(
+            urlsToCache.map(url => cache.add(url).catch(err => console.log(`Failed to cache ${url}:`, err)))
+        );
       })
   );
 });

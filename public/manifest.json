@@ -1,11 +1,11 @@
 {
   "name": "Egg Incubator Monitor",
   "short_name": "Incubator",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#2e7d32",
   "background_color": "#ffffff",
-  "start_url": ".",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
