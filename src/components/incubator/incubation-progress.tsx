@@ -98,47 +98,47 @@ export default function IncubationProgress() {
         </div>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10"
+                onClick={() => handleDayChange(-1)}
+                disabled={isLocked || currentDay <= 1}
+              >
+                <Minus className="h-4 w-4" />
+                <span className="sr-only">Previous Day</span>
+              </Button>
+              <Input
+                type="number"
+                className="w-20 text-center font-bold text-lg h-10"
+                value={dayInput}
+                onChange={handleDayInputChange}
+                onBlur={handleDayInputBlur}
+                min={1}
+                max={totalDays}
+                disabled={isLocked}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10"
+                onClick={() => handleDayChange(1)}
+                disabled={isLocked || currentDay >= totalDays}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="sr-only">Next Day</span>
+              </Button>
+            </div>
             <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10"
-              onClick={() => handleDayChange(-1)}
-              disabled={isLocked || currentDay <= 1}
+                variant="outline"
+                className="w-full"
+                onClick={resetIncubation}
+                disabled={isLocked}
             >
-              <Minus className="h-4 w-4" />
-              <span className="sr-only">Previous Day</span>
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Reset to Day 1
             </Button>
-            <Input
-              type="number"
-              className="w-20 text-center font-bold text-lg h-10"
-              value={dayInput}
-              onChange={handleDayInputChange}
-              onBlur={handleDayInputBlur}
-              min={1}
-              max={totalDays}
-              disabled={isLocked}
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10"
-              onClick={() => handleDayChange(1)}
-              disabled={isLocked || currentDay >= totalDays}
-            >
-              <Plus className="h-4 w-4" />
-              <span className="sr-only">Next Day</span>
-            </Button>
-          </div>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={resetIncubation}
-            disabled={isLocked}
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Reset to Day 1
-          </Button>
         </div>
       </CardContent>
     </Card>
