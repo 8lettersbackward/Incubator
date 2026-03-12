@@ -5,12 +5,19 @@ import { useIncubator } from "@/contexts/incubator-context";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { CalendarDays, Minus, Plus, RotateCcw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
 
 const presets = [14, 18, 21, 24, 28, 35];
 
 export default function IncubationProgress() {
   const { data, setCurrentDay, setTotalDays, isLocked, resetIncubation } = useIncubator();
   const { currentDay, totalDays, eggType } = data.incubation;
+  const [dayInput, setDayInput] = useState(String(currentDay));
+
+  useEffect(() => {
+    setDayInput(String(currentDay));
+  }, [currentDay]);
 
   const progressPercentage = (currentDay / totalDays) * 100;
   const remainingDays = totalDays - currentDay;
@@ -21,6 +28,24 @@ export default function IncubationProgress() {
 
   const handlePresetClick = (days: number) => {
     setTotalDays(days);
+  };
+
+  const handleDayInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDayInput(e.target.value);
+  };
+
+  const handleDayInputBlur = () => {
+    let newDay = parseInt(dayInput, 10);
+    if (isNaN(newDay)) {
+      setDayInput(String(currentDay));
+      return;
+    }
+    if (newDay < 1) {
+      newDay = 1;
+    } else if (newDay > totalDays) {
+      newDay = totalDays;
+    }
+    setCurrentDay(newDay);
   };
 
   const getRemainingDaysText = () => {
@@ -73,20 +98,31 @@ export default function IncubationProgress() {
         </div>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-2">
             <Button
               variant="outline"
               size="icon"
+              className="h-10 w-10"
               onClick={() => handleDayChange(-1)}
               disabled={isLocked || currentDay <= 1}
             >
               <Minus className="h-4 w-4" />
               <span className="sr-only">Previous Day</span>
             </Button>
-            <p className="font-semibold tabular-nums text-sm">Manual Day Adjustment</p>
+            <Input
+              type="number"
+              className="w-20 text-center font-bold text-lg h-10"
+              value={dayInput}
+              onChange={handleDayInputChange}
+              onBlur={handleDayInputBlur}
+              min={1}
+              max={totalDays}
+              disabled={isLocked}
+            />
             <Button
               variant="outline"
               size="icon"
+              className="h-10 w-10"
               onClick={() => handleDayChange(1)}
               disabled={isLocked || currentDay >= totalDays}
             >
