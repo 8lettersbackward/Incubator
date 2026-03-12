@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { CalendarDays, Minus, Plus, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
+import { Separator } from "../ui/separator";
 
 const presets = [14, 18, 21, 24, 28, 35];
 
@@ -14,6 +15,7 @@ export default function IncubationProgress() {
   const { data, setCurrentDay, setTotalDays, isLocked, resetIncubation } = useIncubator();
   const { currentDay, totalDays, eggType } = data.incubation;
   const [dayInput, setDayInput] = useState(String(currentDay));
+  const [customDuration, setCustomDuration] = useState("");
 
   useEffect(() => {
     setDayInput(String(currentDay));
@@ -46,6 +48,14 @@ export default function IncubationProgress() {
       newDay = totalDays;
     }
     setCurrentDay(newDay);
+  };
+
+  const handleSetCustomDuration = () => {
+    const newTotal = parseInt(customDuration, 10);
+    if (!isNaN(newTotal) && newTotal > 0) {
+      setTotalDays(newTotal);
+      setCustomDuration('');
+    }
   };
 
   const getRemainingDaysText = () => {
@@ -97,7 +107,27 @@ export default function IncubationProgress() {
           </div>
         </div>
 
+        <Separator />
+
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-center text-muted-foreground">Set Custom Duration</p>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              placeholder="Enter days"
+              value={customDuration}
+              onChange={(e) => setCustomDuration(e.target.value)}
+              disabled={isLocked}
+              className="h-10 text-center"
+            />
+            <Button onClick={handleSetCustomDuration} disabled={isLocked || !customDuration} className="h-10">Set</Button>
+          </div>
+        </div>
+
+        <Separator />
+
         <div className="space-y-4">
+            <p className="text-sm font-medium text-center text-muted-foreground">Adjust Current Day</p>
             <div className="flex items-center justify-center gap-2">
               <Button
                 variant="outline"
