@@ -9,59 +9,31 @@ import ComponentsGuide from '@/components/incubator/components-guide';
 import SystemControls from '@/components/incubator/system-controls';
 import IncubationProgress from '@/components/incubator/incubation-progress';
 import { ViewProvider, useView, ViewType } from '@/contexts/view-context';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 
 const DashboardContent = () => {
-  const { focusedView, setFocusedView } = useView();
+  const { focusedView } = useView();
 
-  const views: Record<NonNullable<ViewType>, { component: React.ReactNode, title: string }> = {
-    incubator: { component: <IncubatorVisualization />, title: 'Incubator Visualization' },
-    controls: { component: <ControlPanel />, title: 'Control Panel' },
-    water: { component: <WaterManagement />, title: 'Water Management' },
-    camera: { component: <CameraConnectivity />, title: 'Camera Feed' },
-    system: { component: <SystemControls />, title: 'System Controls' },
-    progress: { component: <IncubationProgress />, title: 'Incubation Progress' },
-    components: { component: <ComponentsGuide />, title: 'Components Guide' },
+  const views: Record<Exclude<ViewType, null | 'incubator'>, React.ReactNode> = {
+    controls: <ControlPanel />,
+    water: <WaterManagement />,
+    camera: <CameraConnectivity />,
+    system: <SystemControls />,
+    progress: <IncubationProgress />,
+    components: <ComponentsGuide />,
   };
+  
+  // Default to 'controls' on initial load (when focusedView is null) or if 'incubator' is selected
+  const currentView = (!focusedView || focusedView === 'incubator') ? 'controls' : focusedView;
 
-  if (focusedView && views[focusedView]) {
-    const { component } = views[focusedView];
-    return (
-      <>
-        <div className="mb-4">
-          <Button onClick={() => setFocusedView(null)} variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Button>
-        </div>
-        <div className="flex justify-center">
-          <div className="w-full max-w-5xl">
-            {component}
-          </div>
-        </div>
-      </>
-    );
-  }
+  const RightPanelComponent = views[currentView];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <div className="lg:col-span-3">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2">
         <IncubatorVisualization />
       </div>
       <div className="lg:col-span-1">
-        <ControlPanel />
-      </div>
-      <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <WaterManagement />
-        <CameraConnectivity />
-      </div>
-      <div className="lg:col-span-1 space-y-6">
-        <SystemControls />
-        <IncubationProgress />
-      </div>
-      <div className="lg:col-span-4">
-        <ComponentsGuide />
+        {RightPanelComponent}
       </div>
     </div>
   );

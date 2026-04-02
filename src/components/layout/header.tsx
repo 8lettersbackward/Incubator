@@ -14,7 +14,6 @@ export default function Header() {
   const { setFocusedView } = useView();
 
   const menuItems: { label: string, view: ViewType }[] = [
-    { label: "Incubator", view: "incubator" },
     { label: "Control Panel", view: "controls" },
     { label: "Water Management", view: "water" },
     { label: "Camera Feed", view: "camera" },
