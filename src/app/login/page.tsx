@@ -59,10 +59,16 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (error: any) {
       console.error('Login Error:', error);
+      let description = 'An unknown error occurred. Please try again.';
+      if (error.code === 'auth/invalid-credential') {
+        description = 'Invalid email or password. Please check your credentials and try again.';
+      } else {
+        description = error.message || description;
+      }
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: error.message || 'An unknown error occurred. Please try again.',
+        description: description,
       });
       setIsLoading(false);
     }
