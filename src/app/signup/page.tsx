@@ -74,7 +74,7 @@ export default function SignupPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
             <Link href="/" className="flex items-center justify-center gap-3 mb-4">
-              <Logo className="w-36" />
+              <Logo className="w-40" />
             </Link>
           <CardTitle>Create an Account</CardTitle>
           <CardDescription>Get started with smart incubation today.</CardDescription>
