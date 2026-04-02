@@ -17,9 +17,14 @@ export default function LandingPage() {
             Eggcelent
           </h1>
         </div>
-        <Button asChild>
-          <Link href="/dashboard">Go to Dashboard <ArrowRight className="ml-2" /></Link>
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button asChild variant="ghost">
+              <Link href="/login">Log In</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/signup">Sign Up <ArrowRight className="ml-2" /></Link>
+            </Button>
+        </div>
       </header>
 
       <main className="flex-1">
@@ -32,8 +37,8 @@ export default function LandingPage() {
             Welcome to Eggcelent, the smart IoT dashboard for monitoring your egg incubator. Keep track of temperature, humidity, and more, all from one place.
           </p>
           <Button size="lg" asChild>
-            <Link href="/dashboard">
-              Start Monitoring
+            <Link href="/signup">
+              Get Started for Free
               <ArrowRight className="ml-2" />
             </Link>
           </Button>

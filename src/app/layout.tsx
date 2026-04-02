@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-registration";
+import { FirebaseProvider } from "@/firebase/provider";
 
 export const metadata: Metadata = {
   title: "Eggcelent",
@@ -34,7 +35,9 @@ export default function RootLayout({
       </head>
 
       <body className={cn("font-body antialiased bg-background")}>
-        {children}
+        <FirebaseProvider>
+          {children}
+        </FirebaseProvider>
         <Toaster />
         <ServiceWorkerRegistration />
       </body>
