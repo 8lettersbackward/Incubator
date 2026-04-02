@@ -2,11 +2,11 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { useIncubator } from "@/contexts/incubator-context";
-import { Fan, Lightbulb } from "lucide-react";
+import { Fan, Lightbulb, Egg as EggIcon } from "lucide-react";
 import StatusIndicator from "@/components/shared/status-indicator";
 import { cn } from "@/lib/utils";
 
-const Egg = () => <div className="w-4 h-5 bg-orange-200/50 rounded-[50%/60%_60%_40%_40%] border border-orange-200/60" />;
+const Egg = () => <EggIcon className="w-4 h-5 text-orange-300" />;
 
 const EggTray = ({ eggCount }: { eggCount: number }) => (
   <div className="grid grid-cols-10 gap-1 p-1 bg-black/20 rounded-md">
