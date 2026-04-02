@@ -27,7 +27,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Egg, Loader } from 'lucide-react';
+import { Loader } from 'lucide-react';
+import Logo from '@/components/logo';
 
 const formSchema = z.object({
   email: z.string().min(1, { message: 'Please enter your credentials.' }).email({ message: 'Please enter a valid email.' }),
@@ -69,6 +70,7 @@ export default function LoginPage() {
         title: 'Login Failed',
         description: description,
       });
+    } finally {
       setIsLoading(false);
     }
   }
@@ -78,10 +80,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
            <Link href="/" className="flex items-center justify-center gap-3 mb-4">
-              <Egg className="w-8 h-8 text-primary" />
-              <h1 className="text-2xl font-bold tracking-tighter">
-                Eggcelent
-              </h1>
+              <Logo className="w-32" />
             </Link>
           <CardTitle>Welcome Back</CardTitle>
           <CardDescription>Enter your credentials to access your dashboard.</CardDescription>

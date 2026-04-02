@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Download, Smartphone, Egg, Thermometer, AlertTriangle } from 'lucide-react';
+import { ArrowRight, Download, Smartphone, Thermometer, AlertTriangle } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import Logo from '@/components/logo';
 
 export default function LandingPage() {
   const mobileImage = PlaceHolderImages.find(img => img.id === 'mobile-app-interface');
@@ -11,12 +12,7 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <Egg className="w-8 h-8 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tighter">
-            Eggcelent
-          </h1>
-        </div>
+        <Logo className="w-28 sm:w-32" />
         <div className="flex items-center gap-2">
             <Button asChild variant="ghost">
               <Link href="/login">Log In</Link>
@@ -29,7 +25,10 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 text-center py-20 sm:py-32">
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 text-center py-16 sm:py-24">
+           <div className="flex justify-center mb-8">
+             <Logo className="w-48 sm:w-64" />
+          </div>
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tighter mb-4">
             Smart Incubation, Simplified.
           </h2>

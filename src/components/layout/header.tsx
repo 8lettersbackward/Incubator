@@ -1,6 +1,6 @@
 "use client";
 
-import { Egg, Settings, LogOut } from "lucide-react";
+import { Settings, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,7 @@ import { getAuth, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/firebase/auth/use-user";
+import Logo from "../logo";
 
 export default function Header() {
   const { setFocusedView } = useView();
@@ -51,12 +52,7 @@ export default function Header() {
 
   return (
     <header className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <Egg className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tighter text-foreground">
-          Eggcelent
-        </h1>
-      </div>
+      <Logo className="w-28 sm:w-32" />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
