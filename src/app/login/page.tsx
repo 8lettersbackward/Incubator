@@ -30,8 +30,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Egg, Loader } from 'lucide-react';
 
 const formSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email.' }),
-  password: z.string().min(1, { message: 'Password is required.' }),
+  email: z.string().min(1, { message: 'Please enter your credentials.' }).email({ message: 'Please enter a valid email.' }),
+  password: z.string().min(1, { message: 'Please enter your credentials.' }),
 });
 
 export default function LoginPage() {
@@ -61,7 +61,7 @@ export default function LoginPage() {
       console.error('Login Error:', error);
       let description = 'An unknown error occurred. Please try again.';
       if (error.code === 'auth/invalid-credential') {
-        description = 'Invalid email or password. Please check your credentials and try again.';
+        description = 'Invalid email or password.';
       } else {
         description = error.message || description;
       }
