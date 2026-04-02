@@ -12,7 +12,7 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <Logo className="w-40" />
+        <Logo className="h-8" />
         <div className="flex items-center gap-2">
             <Button asChild variant="ghost">
               <Link href="/login">Log In</Link>
@@ -27,7 +27,7 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 text-center py-16 sm:py-24">
            <div className="flex justify-center mb-8">
-             <Logo className="w-56 sm:w-72" />
+             <Logo className="w-36" />
           </div>
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tighter mb-4">
             Smart Incubation, Simplified.

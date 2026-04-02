@@ -52,7 +52,7 @@ export default function Header() {
 
   return (
     <header className="flex items-center justify-between">
-      <Logo className="w-40" />
+      <Logo className="h-8" />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
