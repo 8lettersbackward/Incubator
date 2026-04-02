@@ -62,9 +62,9 @@ export default function LoginPage() {
       let description = 'An unknown error occurred. Please try again.';
       if (error.code === 'auth/invalid-credential') {
         description = 'Invalid email or password.';
-      } else {
-        description = error.message || description;
       }
+      // Do not log the error to the console in production
+      // console.error('Login Error:', error); 
       toast({
         variant: 'destructive',
         title: 'Login Failed',
@@ -80,7 +80,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
            <Link href="/" className="flex items-center justify-center gap-3 mb-4">
-              <Logo className="w-32" />
+              <Logo className="w-36" />
             </Link>
           <CardTitle>Welcome Back</CardTitle>
           <CardDescription>Enter your credentials to access your dashboard.</CardDescription>

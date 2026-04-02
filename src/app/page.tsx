@@ -12,7 +12,7 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <Logo className="w-28 sm:w-32" />
+        <Logo className="w-36" />
         <div className="flex items-center gap-2">
             <Button asChild variant="ghost">
               <Link href="/login">Log In</Link>
