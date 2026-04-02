@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-import { IncubatorProvider } from "@/contexts/incubator-context";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-registration";
@@ -35,11 +34,8 @@ export default function RootLayout({
       </head>
 
       <body className={cn("font-body antialiased bg-background")}>
-        <IncubatorProvider>
-          {children}
-          <Toaster />
-        </IncubatorProvider>
-
+        {children}
+        <Toaster />
         <ServiceWorkerRegistration />
       </body>
     </html>
