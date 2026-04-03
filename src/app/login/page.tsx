@@ -80,7 +80,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
            <Link href="/" className="flex items-center justify-center gap-3 mb-4">
-              <Logo className="w-36" />
+              <Logo className="h-20" />
             </Link>
           <CardTitle>Welcome Back</CardTitle>
           <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
