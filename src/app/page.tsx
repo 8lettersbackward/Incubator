@@ -25,7 +25,7 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 text-center py-16 sm:py-24">
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 text-center py-8 sm:py-12">
            <div className="flex justify-center mb-8">
              <Logo className="h-96" />
           </div>
