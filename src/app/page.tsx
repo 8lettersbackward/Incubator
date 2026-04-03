@@ -26,13 +26,13 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 text-center py-2">
-           <div className="flex justify-center mb-8">
+           <div className="flex justify-center mb-4">
              <Logo className="h-96" />
           </div>
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tighter mb-4">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tighter mb-2">
             Smart Incubation, Simplified.
           </h2>
-          <p className="max-w-2xl mx-auto text-lg text-muted-foreground mb-8">
+          <p className="max-w-2xl mx-auto text-lg text-muted-foreground mb-6">
             Welcome to Eggcelent, the smart IoT dashboard for monitoring your egg incubator. Keep track of temperature, humidity, and more, all from one place.
           </p>
           <Button size="lg" asChild>
