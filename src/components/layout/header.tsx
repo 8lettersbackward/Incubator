@@ -44,7 +44,7 @@ export default function Header() {
   const menuItems: { label: string, view: ViewType }[] = [
     { label: "Control Panel", view: "controls" },
     { label: "Water Management", view: "water" },
-    { label: "Camera Feed", view: "camera" },
+    { label: "Hatching Chamber", view: "camera" },
     { label: "System Controls", view: "system" },
     { label: "Incubation Progress", view: "progress" },
     { label: "Components Guide", view: "components" },

@@ -15,9 +15,9 @@ export default function CameraConnectivity() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
             <Video className="w-6 h-6 text-primary" />
-            Camera Feed
+            Hatching Chamber
         </CardTitle>
-        <CardDescription>{data.control.cameraOn ? "Live feed from inside the incubator" : "Camera is currently turned off"}</CardDescription>
+        <CardDescription>{data.control.cameraOn ? "Live feed from inside the hatching chamber" : "Camera is currently turned off"}</CardDescription>
       </CardHeader>
       <CardContent>
         {data.control.cameraOn && cameraImage ? (
