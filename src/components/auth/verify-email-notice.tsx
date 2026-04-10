@@ -28,7 +28,9 @@ export default function VerifyEmailNotice() {
         if (auth.currentUser) {
           await auth.currentUser.reload();
           // If the email has been verified...
-          if (auth.currentUser.emailVerified) {
+          // We use optional chaining here because auth.currentUser might become null after reload()
+          // if the user's account has been disabled or deleted.
+          if (auth.currentUser?.emailVerified) {
             // ...stop checking...
             clearInterval(interval);
             
