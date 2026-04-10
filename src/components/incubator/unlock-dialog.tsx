@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useIncubator } from "@/contexts/incubator-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,12 +17,25 @@ import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 
 export default function UnlockDialog({ children }: { children: React.ReactNode }) {
-  const { unlock, setAccessCode } = useIncubator();
+  const { data, unlock, setAccessCode } = useIncubator();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [pin, setPin] = useState("");
   const [newPin, setNewPin] = useState("");
-  const [view, setView] = useState<'unlock' | 'reset'>('unlock');
+  const [view, setView] = useState<'unlock' | 'set-pin'>('unlock');
+
+  const isInitialSetup = !data.control.accessCode;
+
+  useEffect(() => {
+    if (isOpen) {
+      if (isInitialSetup) {
+        setView('set-pin');
+      } else {
+        setView('unlock');
+      }
+    }
+  }, [isOpen, isInitialSetup]);
+
 
   const handleUnlock = async () => {
     const success = await unlock(pin);
@@ -42,12 +55,12 @@ export default function UnlockDialog({ children }: { children: React.ReactNode }
     }
   };
 
-  const handleResetPin = () => {
+  const handleSetPin = () => {
     if (newPin.length === 4 && /^\d+$/.test(newPin)) {
       setAccessCode(newPin);
       toast({
-        title: "PIN Changed",
-        description: "Your new access PIN has been set.",
+        title: isInitialSetup ? "PIN Set Successfully" : "PIN Changed",
+        description: isInitialSetup ? "You can now unlock your incubator controls." : "Your new access PIN has been set.",
       });
       closeAndReset();
     } else {
@@ -102,7 +115,7 @@ export default function UnlockDialog({ children }: { children: React.ReactNode }
                     </div>
                 </div>
                 <DialogFooter className="sm:justify-between flex-col-reverse sm:flex-row items-center gap-2">
-                    <Button variant="link" className="p-0 h-auto self-center sm:self-auto" onClick={() => setView('reset')}>Forgot PIN?</Button>
+                    <Button variant="link" className="p-0 h-auto self-center sm:self-auto" onClick={() => setView('set-pin')}>Forgot PIN?</Button>
                     <div className="flex gap-2">
                         <Button type="button" variant="outline" onClick={closeAndReset}>Cancel</Button>
                         <Button type="submit" onClick={handleUnlock}>Unlock</Button>
@@ -112,9 +125,12 @@ export default function UnlockDialog({ children }: { children: React.ReactNode }
         ) : (
             <>
                 <DialogHeader>
-                    <DialogTitle>Reset Access PIN</DialogTitle>
+                    <DialogTitle>{isInitialSetup ? 'Set Access PIN' : 'Reset Access PIN'}</DialogTitle>
                     <DialogDescription>
-                        Enter a new 4-digit PIN for system access. This will replace your old one.
+                         {isInitialSetup 
+                            ? "To secure your incubator, please set a new 4-digit access PIN."
+                            : "Enter a new 4-digit PIN. This will replace your old one."
+                         }
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -134,8 +150,8 @@ export default function UnlockDialog({ children }: { children: React.ReactNode }
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button type="button" variant="ghost" onClick={() => { setView('unlock'); setNewPin(''); }}>Back to Unlock</Button>
-                    <Button type="submit" onClick={handleResetPin}>Set New PIN</Button>
+                    {!isInitialSetup && <Button type="button" variant="ghost" onClick={() => { setView('unlock'); setNewPin(''); }}>Back to Unlock</Button>}
+                    <Button type="submit" onClick={handleSetPin}>{isInitialSetup ? 'Save PIN' : 'Set New PIN'}</Button>
                 </DialogFooter>
             </>
         )}

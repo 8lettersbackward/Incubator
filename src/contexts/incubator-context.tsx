@@ -29,6 +29,7 @@ export interface IncubatorData {
     cameraOn: boolean;
     targetTemperature: number;
     targetHumidity: number;
+    accessCode: string;
   };
   sensors: {
     temperature: number;
@@ -89,6 +90,7 @@ export const initialData: IncubatorData = {
     cameraOn: true,
     targetTemperature: 37.5,
     targetHumidity: 55,
+    accessCode: "",
   },
   sensors: {
     temperature: 37.5,
@@ -117,7 +119,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useUser();
   const [data, setData] = useState<IncubatorData>(initialData);
   const [isLocked, setIsLocked] = useState(true);
-  const [accessCode, setAccessCode] = useState('1234'); // Default PIN
   const { toast } = useToast();
 
   useEffect(() => {
@@ -297,14 +298,23 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
 
   const unlock = useCallback((pin: string) => {
     return new Promise<boolean>((resolve) => {
-      if (pin === accessCode) {
+      if (!data.control.accessCode) {
+        toast({
+          variant: "destructive",
+          title: "PIN Not Set",
+          description: "Please set a PIN before unlocking.",
+        });
+        resolve(false);
+        return;
+      }
+      if (pin === data.control.accessCode) {
         setIsLocked(false);
         resolve(true);
       } else {
         resolve(false);
       }
     });
-  }, [accessCode]);
+  }, [data.control.accessCode, toast]);
 
   const lock = useCallback(() => {
     setIsLocked(true);
@@ -313,6 +323,13 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       description: "Controls are now secured.",
     });
   }, [toast]);
+  
+  const setAccessCode = useCallback((pin: string) => {
+    const fullPath = getDbPath('control/accessCode');
+    if (!database || !fullPath) return;
+    const dbRef = ref(database, fullPath);
+    set(dbRef, pin);
+  }, [getDbPath]);
 
   const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, startIncubation, setNumberOfEggs };
 
