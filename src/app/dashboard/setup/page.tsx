@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase/auth/use-user';
 import { database } from '@/firebase/config';
-import { ref, set } from 'firebase/database';
+import { ref, set, get } from 'firebase/database';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -50,7 +50,7 @@ export default function IncubatorSetupPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) {
+    if (!user || !database) {
       toast({
         variant: 'destructive',
         title: 'Not Authenticated',
@@ -63,6 +63,23 @@ export default function IncubatorSetupPage() {
     setIsCreating(true);
 
     try {
+      // Check for duplicate name
+      const incubatorsRef = ref(database, 'incubators');
+      const snapshot = await get(incubatorsRef);
+      if (snapshot.exists()) {
+        const incubators = snapshot.val();
+        const names = Object.values(incubators).map((inc: any) => inc.name?.toLowerCase());
+        if (names.includes(values.name.toLowerCase())) {
+          toast({
+            variant: 'destructive',
+            title: 'Name Already Exists',
+            description: `An incubator with the name "${values.name}" already exists. Please choose a different name.`,
+          });
+          setIsCreating(false);
+          return;
+        }
+      }
+
       const incubatorRef = ref(database, `incubators/${user.uid}`);
       
       const newIncubatorData = {
@@ -111,7 +128,7 @@ export default function IncubatorSetupPage() {
             </div>
           <CardTitle>Set Up Your Incubator</CardTitle>
           <CardDescription>
-            Give your incubator a name to get started. Each user can have one incubator.
+            Give your incubator a unique name to get started. Each user can have one incubator.
           </CardDescription>
         </CardHeader>
         <CardContent>
