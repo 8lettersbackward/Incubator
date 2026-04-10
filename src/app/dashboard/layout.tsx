@@ -3,25 +3,51 @@
 import { IncubatorProvider } from "@/contexts/incubator-context";
 import { useUser } from "@/firebase/auth/use-user";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Loader } from "lucide-react";
 import VerifyEmailNotice from "@/components/auth/verify-email-notice";
+import { database } from "@/firebase/config";
+import { ref, get } from "firebase/database";
+
+type IncubatorStatus = 'checking' | 'exists' | 'not-found' | 'error';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isLoading } = useUser();
+  const { user, isLoading: isUserLoading } = useUser();
   const router = useRouter();
+  const [incubatorStatus, setIncubatorStatus] = useState<IncubatorStatus>('checking');
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isUserLoading && !user) {
       router.push('/login');
+      return;
     }
-  }, [user, isLoading, router]);
 
-  if (isLoading || !user) {
+    if (user && user.emailVerified && database) {
+      setIncubatorStatus('checking');
+      const incubatorRef = ref(database, `incubators/${user.uid}`);
+      get(incubatorRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          setIncubatorStatus('exists');
+        } else {
+          setIncubatorStatus('not-found');
+          router.push('/dashboard/setup');
+        }
+      }).catch((error) => {
+        console.error("Error checking for incubator:", error);
+        setIncubatorStatus('error');
+      });
+    } else if (user && !user.emailVerified) {
+      // Don't check for incubator if email is not verified
+      setIncubatorStatus('exists'); // Prevent redirect loop
+    }
+
+  }, [user, isUserLoading, router]);
+
+  if (isUserLoading || incubatorStatus === 'checking') {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader className="w-12 h-12 animate-spin text-primary" />
@@ -33,9 +59,26 @@ export default function DashboardLayout({
     return <VerifyEmailNotice />;
   }
 
+  if (incubatorStatus === 'error') {
+    return (
+        <div className="flex flex-col gap-4 items-center justify-center min-h-screen text-destructive">
+            <p>Could not verify your incubator status.</p>
+            <p className="text-sm text-muted-foreground">Please try again later.</p>
+        </div>
+    )
+  }
+
+  if (incubatorStatus === 'exists' && user && user.emailVerified) {
+    return (
+      <IncubatorProvider>
+        {children}
+      </IncubatorProvider>
+    );
+  }
+
   return (
-    <IncubatorProvider>
-      {children}
-    </IncubatorProvider>
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader className="w-12 h-12 animate-spin text-primary" />
+    </div>
   );
 }

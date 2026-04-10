@@ -15,10 +15,12 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/firebase/auth/use-user";
 import Logo from "../logo";
+import { useIncubator } from "@/contexts/incubator-context";
 
 export default function Header() {
   const { setFocusedView } = useView();
   const { user } = useUser();
+  const { data: incubatorData } = useIncubator();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -52,7 +54,14 @@ export default function Header() {
 
   return (
     <header className="flex items-center justify-between">
-      <Logo className="h-10" />
+      <div className="flex items-center gap-4">
+        <Logo className="h-10" />
+        {incubatorData.name && (
+          <h1 className="hidden sm:block text-xl font-semibold text-foreground tracking-tight">
+            {incubatorData.name}
+          </h1>
+        )}
+      </div>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

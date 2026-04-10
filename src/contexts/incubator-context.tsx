@@ -1,10 +1,11 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { database } from '@/firebase/config';
 import { ref, onValue, set, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/firebase/auth/use-user';
 
 // Data types
 export interface AlertSystem {
@@ -16,6 +17,7 @@ export interface AlertSystem {
 }
 
 export interface IncubatorData {
+  name?: string;
   status: {
     deviceOnline: boolean;
     wifiConnected: boolean;
@@ -66,7 +68,7 @@ interface IncubatorContextType {
   setNumberOfEggs: (count: number) => void;
 }
 
-const EGG_INCUBATION_PERIODS: { [key: string]: number } = {
+export const EGG_INCUBATION_PERIODS: { [key: string]: number } = {
   Chicken: 21,
   Duck: 28,
   Quail: 18,
@@ -74,7 +76,8 @@ const EGG_INCUBATION_PERIODS: { [key: string]: number } = {
 };
 
 // Initial State
-const initialData: IncubatorData = {
+export const initialData: IncubatorData = {
+  name: "My Incubator",
   status: {
     deviceOnline: true,
     wifiConnected: true,
@@ -111,47 +114,31 @@ const initialData: IncubatorData = {
 const IncubatorContext = createContext<IncubatorContextType | undefined>(undefined);
 
 export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useUser();
   const [data, setData] = useState<IncubatorData>(initialData);
   const [isLocked, setIsLocked] = useState(true);
   const [accessCode, setAccessCode] = useState('1234'); // Default PIN
   const { toast } = useToast();
-  const dataRef = useRef(data);
 
   useEffect(() => {
-    dataRef.current = data;
-  }, [data]);
-
-  useEffect(() => {
-    if (!database) {
-      toast({
-        variant: "destructive",
-        title: "Firebase Not Configured",
-        description: "Please provide your Firebase credentials in the .env.local file to connect to the database.",
-        duration: Infinity,
-      });
+    if (!database || !user) {
+      setData(initialData); // Reset to initial if user logs out
       return;
     }
-    const incubatorRef = ref(database, 'incubator');
+    
+    const incubatorRef = ref(database, `incubators/${user.uid}`);
     const unsubscribe = onValue(incubatorRef, (snapshot) => {
       if (snapshot.exists()) {
-        const remoteData = snapshot.val() || {};
-        setData({
-          status: { ...initialData.status, ...(remoteData.status || {}) },
-          control: { ...initialData.control, ...(remoteData.control || {}) },
-          sensors: { ...initialData.sensors, ...(remoteData.sensors || {}) },
-          alertSystem: { ...initialData.alertSystem, ...(remoteData.alertSystem || {}) },
-          incubation: { ...initialData.incubation, ...(remoteData.incubation || {}) },
-        });
+        setData(snapshot.val());
       } else {
-        set(incubatorRef, initialData);
         setData(initialData);
       }
     });
     return () => unsubscribe();
-  }, [toast]);
+  }, [user]);
 
   useEffect(() => {
-    if (!database || !data.sensors || !data.alertSystem) return;
+    if (!database || !user || !data.sensors || !data.alertSystem) return;
 
     const { temperature, humidity } = data.sensors;
     
@@ -182,7 +169,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (humidity < OPTIMAL_HUMIDITY_WARNING_LOW || humidity > OPTIMAL_HUMIDITY_WARNING_HIGH) {
-      newAlert.status = 'CRITICAL';
+      if(newAlert.status !== 'CRITICAL') newAlert.status = 'WARNING';
       newAlert.humidityState = humidity < OPTIMAL_HUMIDITY_WARNING_LOW ? 'LOW' : 'HIGH';
     } else if (humidity < OPTIMAL_HUMIDITY_NORMAL_MIN || humidity > OPTIMAL_HUMIDITY_NORMAL_MAX) {
       if (newAlert.status !== 'CRITICAL') newAlert.status = 'WARNING';
@@ -212,227 +199,90 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
             duration: 12000,
         });
       }
-      const alertSystemRef = ref(database, 'incubator/alertSystem');
+      const alertSystemRef = ref(database, `incubators/${user.uid}/alertSystem`);
       set(alertSystemRef, newAlert);
     }
-  }, [data.sensors, data.alertSystem, database, toast]);
+  }, [data.sensors, data.alertSystem, user, toast]);
 
-  const setControlValue = useCallback((key: string, value: any) => {
+  const getDbPath = useCallback((path: string) => {
+    if (!user) return null;
+    return `incubators/${user.uid}/${path}`;
+  }, [user]);
+
+  const setValue = useCallback((path: string, value: any) => {
     if (isLocked) {
-      toast({
-        variant: "destructive",
-        title: "System Locked",
-        description: "Unlock the system to make changes.",
-      });
+      toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to make changes." });
       return false;
     }
-    if (!database) return false;
-    const controlRef = ref(database, `incubator/control/${key}`);
-    set(controlRef, value);
+    const fullPath = getDbPath(path);
+    if (!database || !fullPath) return false;
+    const dbRef = ref(database, fullPath);
+    set(dbRef, value);
     return true;
-  }, [isLocked, toast]);
-  
-  const setStatusValue = useCallback((key: string, value: any) => {
+  }, [isLocked, toast, getDbPath]);
+
+  const updateValues = useCallback((updates: object) => {
     if (isLocked) {
-      toast({
-        variant: "destructive",
-        title: "System Locked",
-        description: "Unlock the system to make changes.",
-      });
-      return false;
+      toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to make changes." });
+      return;
     }
-    if (!database) return false;
-    const statusRef = ref(database, `incubator/status/${key}`);
-    set(statusRef, value);
-    return true;
-  }, [isLocked, toast]);
+    const basePath = getDbPath('');
+    if (!database || !basePath) return;
+    const dbRef = ref(database, basePath);
+    update(dbRef, updates);
+  }, [isLocked, toast, getDbPath]);
 
-  const setSensorValue = useCallback((key: string, value: any) => {
-    if (isLocked) {
-      toast({
-        variant: "destructive",
-        title: "System Locked",
-        description: "Unlock the system to make changes.",
-      });
-      return false;
-    }
-    if (!database) return false;
-    const sensorRef = ref(database, `incubator/sensors/${key}`);
-    set(sensorRef, value);
-    return true;
-  }, [isLocked, toast]);
-
-  const setSensorTemperature = useCallback((temp: number) => {
-    setSensorValue('temperature', temp);
-  }, [setSensorValue]);
-
-  const setSensorHumidity = useCallback((humidity: number) => {
-    setSensorValue('humidity', humidity);
-  }, [setSensorValue]);
-
-  const toggleFan = useCallback(() => {
-    setControlValue('fan', !data.control.fan)
-  }, [setControlValue, data.control.fan]);
-
-  const toggleHeater = useCallback(() => {
-    setControlValue('heater', !data.control.heater);
-  }, [setControlValue, data.control.heater]);
-
-  const toggleMotor = useCallback(() => {
-    setControlValue('motor', !data.control.motor);
-  }, [setControlValue, data.control.motor]);
-
-  const toggleCamera = useCallback(() => {
-    setControlValue('cameraOn', !data.control.cameraOn);
-  }, [setControlValue, data.control.cameraOn]);
-  
-  const setTargetTemperature = useCallback((temp: number) => {
-    setControlValue('targetTemperature', temp);
-  }, [setControlValue]);
-
-  const setTargetHumidity = useCallback((humidity: number) => {
-    setControlValue('targetHumidity', humidity);
-  }, [setControlValue]);
+  const toggleFan = useCallback(() => setValue('control/fan', !data.control.fan), [setValue, data.control.fan]);
+  const toggleHeater = useCallback(() => setValue('control/heater', !data.control.heater), [setValue, data.control.heater]);
+  const toggleMotor = useCallback(() => setValue('control/motor', !data.control.motor), [setValue, data.control.motor]);
+  const toggleCamera = useCallback(() => setValue('control/cameraOn', !data.control.cameraOn), [setValue, data.control.cameraOn]);
+  const setTargetTemperature = useCallback((temp: number) => setValue('control/targetTemperature', temp), [setValue]);
+  const setTargetHumidity = useCallback((humidity: number) => setValue('control/targetHumidity', humidity), [setValue]);
+  const setSensorTemperature = useCallback((temp: number) => setValue('sensors/temperature', temp), [setValue]);
+  const setSensorHumidity = useCallback((humidity: number) => setValue('sensors/humidity', humidity), [setValue]);
 
   const refillWater = useCallback(() => {
-    if (isLocked) {
-      toast({
-        variant: "destructive",
-        title: "System Locked",
-        description: "Unlock the system to refill water.",
-      });
-      return;
-    }
-    if (data.sensors.waterPercent >= 95) {
-        toast({
-            title: "Reservoir Full",
-            description: "Water level is already near maximum.",
-        });
-        return;
-    }
-    if (!database) return;
-    
-    const waterLevelRef = ref(database, 'incubator/sensors/waterLevel');
-    set(waterLevelRef, "HIGH");
-
-    const waterPercentRef = ref(database, 'incubator/sensors/waterPercent');
-    set(waterPercentRef, 100);
-
-     toast({
-        title: "Water Refilled",
-        description: "The water reservoir has been set to 100%.",
-      });
-  }, [isLocked, toast, data.sensors.waterPercent]);
+    if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to refill water." }); return; }
+    if (data.sensors.waterPercent >= 95) { toast({ title: "Reservoir Full", description: "Water level is already near maximum." }); return; }
+    updateValues({ 'sensors/waterLevel': "HIGH", 'sensors/waterPercent': 100 });
+    toast({ title: "Water Refilled", description: "The water reservoir has been set to 100%." });
+  }, [isLocked, toast, data.sensors.waterPercent, updateValues]);
   
   const setEggType = useCallback((eggType: string) => {
-    if (isLocked) {
-      toast({
-        variant: "destructive",
-        title: "System Locked",
-        description: "Unlock the system to change egg type.",
-      });
-      return;
-    }
-    if (!database) return;
+    if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to change egg type." }); return; }
     const newTotalDays = EGG_INCUBATION_PERIODS[eggType] || 21;
-    const incubationRef = ref(database, 'incubator/incubation');
-    update(incubationRef, {
-      eggType: eggType,
-      currentDay: 1,
-      totalDays: newTotalDays
-    });
-  }, [isLocked, toast]);
+    updateValues({ 'incubation/eggType': eggType, 'incubation/currentDay': 1, 'incubation/totalDays': newTotalDays });
+  }, [isLocked, toast, updateValues]);
 
   const setCurrentDay = useCallback((day: number) => {
-    if (isLocked) {
-      toast({
-        variant: "destructive",
-        title: "System Locked",
-        description: "Unlock the system to adjust incubation day.",
-      });
-      return;
-    }
+    if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to adjust incubation day." }); return; }
     if (day >= 1 && day <= data.incubation.totalDays) {
-      if (!database) return;
-      const dayRef = ref(database, 'incubator/incubation/currentDay');
-      set(dayRef, day);
+      setValue('incubation/currentDay', day);
     }
-  }, [isLocked, toast, data.incubation.totalDays]);
+  }, [isLocked, toast, data.incubation.totalDays, setValue]);
 
   const setTotalDays = (days: number) => {
-    if (isLocked) {
-      toast({
-        variant: "destructive",
-        title: "System Locked",
-        description: "Unlock the system to change incubation duration.",
-      });
-      return;
-    }
-    if (!database) return;
-    const incubationRef = ref(database, 'incubator/incubation');
-    update(incubationRef, {
-      totalDays: days,
-      currentDay: 1
-    });
+    if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to change incubation duration." }); return; }
+    updateValues({ 'incubation/totalDays': days, 'incubation/currentDay': 1 });
   };
 
   const resetIncubation = useCallback(() => {
-    if (isLocked) {
-      toast({
-        variant: "destructive",
-        title: "System Locked",
-        description: "Unlock the system to reset incubation.",
-      });
-      return;
-    }
-    if (!database) return;
-    const dayRef = ref(database, 'incubator/incubation/currentDay');
-    set(dayRef, 1);
-    toast({
-      title: "Incubation Reset",
-      description: `The incubation period has been reset to Day 1.`,
-    });
-  }, [isLocked, toast]);
+    if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to reset incubation." }); return; }
+    setValue('incubation/currentDay', 1);
+    toast({ title: "Incubation Reset", description: `The incubation period has been reset to Day 1.` });
+  }, [isLocked, toast, setValue]);
 
   const startIncubation = useCallback(() => {
-    if (isLocked) {
-      toast({
-        variant: "destructive",
-        title: "System Locked",
-        description: "Unlock the system to start the incubation cycle.",
-      });
-      return;
-    }
-    if (!database) return;
-    const dayRef = ref(database, 'incubator/incubation/currentDay');
-    set(dayRef, 1);
-    toast({
-      title: "Incubation Started",
-      description: `A new incubation cycle for ${data.incubation.eggType} eggs has begun.`,
-    });
-  }, [isLocked, toast, data.incubation.eggType, database]);
+    if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to start the incubation cycle." }); return; }
+    setValue('incubation/currentDay', 1);
+    toast({ title: "Incubation Started", description: `A new incubation cycle for ${data.incubation.eggType} eggs has begun.` });
+  }, [isLocked, toast, data.incubation.eggType, setValue]);
 
   const setNumberOfEggs = useCallback((count: number) => {
-    if (isLocked) {
-      toast({
-        variant: "destructive",
-        title: "System Locked",
-        description: "Unlock the system to change the number of eggs.",
-      });
-      return;
-    }
-    if (!database) return;
-    if (count < 1 || count > 112) {
-      toast({
-        variant: "destructive",
-        title: "Invalid Egg Count",
-        description: "Number of eggs must be between 1 and 112.",
-      });
-      return;
-    }
-    const eggsRef = ref(database, 'incubator/incubation/numberOfEggs');
-    set(eggsRef, count);
-  }, [isLocked, toast]);
+    if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to change the number of eggs." }); return; }
+    if (count < 1 || count > 112) { toast({ variant: "destructive", title: "Invalid Egg Count", description: "Number of eggs must be between 1 and 112." }); return; }
+    setValue('incubation/numberOfEggs', count);
+  }, [isLocked, toast, setValue]);
 
   const unlock = useCallback((pin: string) => {
     return new Promise<boolean>((resolve) => {
@@ -469,5 +319,3 @@ export const useIncubator = (): IncubatorContextType => {
   }
   return context;
 };
-
-    
