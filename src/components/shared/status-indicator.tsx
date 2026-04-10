@@ -10,7 +10,7 @@ type StatusIndicatorProps = {
 export default function StatusIndicator({
   label,
   isActive,
-  activeColor = "bg-accent",
+  activeColor = "bg-accent shadow-[0_0_8px_2px_hsl(var(--accent))]",
   inactiveColor = "bg-muted",
 }: StatusIndicatorProps) {
   return (
@@ -18,8 +18,7 @@ export default function StatusIndicator({
       <div
         className={cn(
           "h-2.5 w-2.5 rounded-full transition-all",
-          isActive ? activeColor : inactiveColor,
-          isActive && "shadow-[0_0_8px_2px_hsl(var(--accent))]"
+          isActive ? activeColor : inactiveColor
         )}
       />
       <span className="text-muted-foreground">{label}</span>

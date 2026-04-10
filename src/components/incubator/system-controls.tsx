@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useIncubator } from "@/contexts/incubator-context";
-import { Lightbulb, Fan, RotateCw, Camera, Wifi, LockIcon } from "lucide-react";
+import { Lightbulb, Fan, RotateCw, Camera, LockIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ControlItem = ({ icon, label, description, checked, onCheckedChange, disabled }: { icon: React.ReactNode; label: string; description: string; checked: boolean; onCheckedChange: () => void; disabled: boolean; }) => (
@@ -21,7 +21,7 @@ const ControlItem = ({ icon, label, description, checked, onCheckedChange, disab
 );
 
 export default function SystemControls() {
-    const { data, isLocked, toggleHeater, toggleFan, toggleMotor, toggleCamera, toggleWifi } = useIncubator();
+    const { data, isLocked, toggleHeater, toggleFan, toggleMotor, toggleCamera } = useIncubator();
 
     const controls = [
         {
@@ -51,13 +51,6 @@ export default function SystemControls() {
             description: "Live feed status",
             checked: data.control.cameraOn,
             onCheckedChange: toggleCamera,
-        },
-        {
-            icon: <Wifi className="w-6 h-6 text-primary" />,
-            label: "WiFi",
-            description: "Connectivity status",
-            checked: data.status.wifiConnected,
-            onCheckedChange: toggleWifi,
         },
     ];
 

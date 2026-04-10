@@ -50,7 +50,6 @@ interface IncubatorContextType {
   toggleHeater: () => void;
   toggleMotor: () => void;
   toggleCamera: () => void;
-  toggleWifi: () => void;
   refillWater: () => void;
   setEggType: (eggType: string) => void;
   unlock: (pin: string) => Promise<boolean>;
@@ -286,10 +285,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const toggleCamera = useCallback(() => {
     setControlValue('cameraOn', !data.control.cameraOn);
   }, [setControlValue, data.control.cameraOn]);
-
-  const toggleWifi = useCallback(() => {
-    setStatusValue('wifiConnected', !data.status.wifiConnected);
-  }, [setStatusValue, data.status]);
   
   const setTargetTemperature = useCallback((temp: number) => {
     setControlValue('targetTemperature', temp);
@@ -458,7 +453,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [toast]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, startIncubation, setNumberOfEggs };
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, startIncubation, setNumberOfEggs };
 
   return (
     <IncubatorContext.Provider value={value}>

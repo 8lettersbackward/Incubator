@@ -18,7 +18,7 @@ const EggTray = ({ eggCount }: { eggCount: number }) => (
 
 export default function IncubatorVisualization() {
   const { data } = useIncubator();
-  const { control, sensors, status, incubation } = data;
+  const { control, sensors, incubation } = data;
   const { numberOfEggs = 0, eggType } = incubation;
 
   const tray1Eggs = Math.min(numberOfEggs, 56);
@@ -37,20 +37,19 @@ export default function IncubatorVisualization() {
                     {sensors.humidity}% RH
                 </p>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-x-3 gap-y-2 text-xs">
-                <StatusIndicator label="Heat Lamp" isActive={control.heater} activeColor="bg-destructive" />
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-x-3 gap-y-2 text-xs">
+                <StatusIndicator label="Heat Lamp" isActive={control.heater} activeColor="bg-chart-5 shadow-[0_0_8px_2px_hsl(var(--chart-5))]" />
                 <StatusIndicator label="Ventilation" isActive={control.fan} />
-                <StatusIndicator label="Turning" isActive={control.motor} activeColor="bg-blue-500" />
+                <StatusIndicator label="Turning" isActive={control.motor} activeColor="bg-chart-1 shadow-[0_0_8px_2px_hsl(var(--chart-1))]" />
                 <StatusIndicator label={`Water ${sensors.waterPercent}%`} isActive={sensors.waterPercent > 5} />
-                <StatusIndicator label="Camera On" isActive={control.cameraOn} />
-                <StatusIndicator label="WiFi Connected" isActive={status.wifiConnected} />
+                <StatusIndicator label="Camera On" isActive={control.cameraOn} activeColor="bg-destructive shadow-[0_0_8px_2px_hsl(var(--destructive))]" />
             </div>
         </div>
 
         <div className="flex-1 relative bg-black/20 border border-border rounded-lg p-4 flex flex-col items-center justify-center gap-4">
           {/* Top components */}
           <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
-            <Lightbulb className={cn("w-8 h-8 text-muted-foreground transition-all", control.heater && "text-yellow-400 drop-shadow-[0_0_8px_theme(colors.yellow.400)]")} />
+            <Lightbulb className={cn("w-8 h-8 text-muted-foreground transition-all", control.heater && "text-chart-5 drop-shadow-[0_0_8px_hsl(var(--chart-5))]")} />
             <Fan className={cn("w-8 h-8 text-muted-foreground transition-all", control.fan && "animate-spin text-accent")} />
           </div>
           
