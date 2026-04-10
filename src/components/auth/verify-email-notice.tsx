@@ -30,13 +30,18 @@ export default function VerifyEmailNotice() {
           if (auth.currentUser.emailVerified) {
             // ...stop checking...
             clearInterval(interval);
+            
+            // Sign the user out so they have to log in again with their verified account.
+            await signOut(auth);
+            
             // ...show a success message...
             toast({
               title: "Verification Successful!",
-              description: "Your account is now active. You are being redirected to the dashboard.",
+              description: "Your account is now active. Please log in to continue.",
             });
-            // ...and redirect them to the dashboard.
-            router.replace('/dashboard');
+            
+            // ...and redirect them to the login page.
+            router.push('/login');
           }
         }
       }, 5000); // Check every 5 seconds.
