@@ -54,10 +54,10 @@ export default function Header() {
 
   return (
     <header className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 overflow-hidden">
         <Logo className="h-10" />
         {incubatorData.name && (
-          <h1 className="hidden sm:block text-xl font-semibold text-foreground tracking-tight">
+          <h1 className="text-base sm:text-xl font-semibold text-foreground tracking-tight truncate">
             {incubatorData.name}
           </h1>
         )}

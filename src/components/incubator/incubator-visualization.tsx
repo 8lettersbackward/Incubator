@@ -37,7 +37,7 @@ export default function IncubatorVisualization() {
                     {sensors.humidity}% RH
                 </p>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-x-3 gap-y-2 text-xs">
+            <div className="flex flex-wrap justify-center sm:justify-end gap-x-4 gap-y-2 text-xs">
                 <StatusIndicator label="Heat Lamp" isActive={control.heater} activeColor="bg-destructive shadow-[0_0_8px_2px_hsl(var(--destructive))]" />
                 <StatusIndicator label="Ventilation" isActive={control.fan} activeColor="bg-yellow-400 shadow-[0_0_8px_2px_#facc15]" />
                 <StatusIndicator label="Turning" isActive={control.motor} activeColor="bg-chart-1 shadow-[0_0_8px_2px_hsl(var(--chart-1))]" />
