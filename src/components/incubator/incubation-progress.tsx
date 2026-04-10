@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useIncubator } from "@/contexts/incubator-context";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Minus, Plus, RotateCcw } from "lucide-react";
+import { CalendarDays, Minus, Plus, RotateCcw, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { Separator } from "../ui/separator";
@@ -12,7 +12,7 @@ import { Separator } from "../ui/separator";
 const presets = [14, 18, 21, 24, 28, 35];
 
 export default function IncubationProgress() {
-  const { data, setCurrentDay, setTotalDays, isLocked, resetIncubation } = useIncubator();
+  const { data, setCurrentDay, setTotalDays, isLocked, resetIncubation, startIncubation } = useIncubator();
   const { currentDay, totalDays, eggType } = data.incubation;
   const [dayInput, setDayInput] = useState(String(currentDay));
   const [customDuration, setCustomDuration] = useState("");
@@ -77,6 +77,11 @@ export default function IncubationProgress() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 pt-2">
+        <Button onClick={startIncubation} disabled={isLocked} className="w-full" size="lg">
+          <Play className="mr-2 h-5 w-5" />
+          Start Incubation Cycle
+        </Button>
+        <Separator />
         <div className="text-center">
             <p className="text-2xl font-bold">{currentDay}<span className="text-base font-normal text-muted-foreground">/{totalDays} days</span></p>
             <p className="text-sm text-primary font-medium">{getRemainingDaysText()}</p>

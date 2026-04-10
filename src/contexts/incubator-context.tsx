@@ -63,6 +63,7 @@ interface IncubatorContextType {
   setCurrentDay: (day: number) => void;
   setTotalDays: (days: number) => void;
   resetIncubation: () => void;
+  startIncubation: () => void;
   setNumberOfEggs: (count: number) => void;
 }
 
@@ -202,10 +203,20 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (JSON.stringify(newAlert) !== JSON.stringify(data.alertSystem)) {
+      const previousStatus = data.alertSystem.status;
+      const newStatus = newAlert.status;
+      if (newStatus !== previousStatus && (newStatus === 'WARNING' || newStatus === 'CRITICAL')) {
+        toast({
+            variant: newStatus === 'CRITICAL' ? 'destructive' : 'default',
+            title: newStatus === 'CRITICAL' ? 'Critical Alert' : 'System Warning',
+            description: newAlert.message,
+            duration: 12000,
+        });
+      }
       const alertSystemRef = ref(database, 'incubator/alertSystem');
       set(alertSystemRef, newAlert);
     }
-  }, [data.sensors, data.alertSystem, database]);
+  }, [data.sensors, data.alertSystem, database, toast]);
 
   const setControlValue = useCallback((key: string, value: any) => {
     if (isLocked) {
@@ -388,6 +399,24 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [isLocked, toast]);
 
+  const startIncubation = useCallback(() => {
+    if (isLocked) {
+      toast({
+        variant: "destructive",
+        title: "System Locked",
+        description: "Unlock the system to start the incubation cycle.",
+      });
+      return;
+    }
+    if (!database) return;
+    const dayRef = ref(database, 'incubator/incubation/currentDay');
+    set(dayRef, 1);
+    toast({
+      title: "Incubation Started",
+      description: `A new incubation cycle for ${data.incubation.eggType} eggs has begun.`,
+    });
+  }, [isLocked, toast, data.incubation.eggType, database]);
+
   const setNumberOfEggs = useCallback((count: number) => {
     if (isLocked) {
       toast({
@@ -429,7 +458,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [toast]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, setNumberOfEggs };
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, toggleWifi, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, startIncubation, setNumberOfEggs };
 
   return (
     <IncubatorContext.Provider value={value}>
