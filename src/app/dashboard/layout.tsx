@@ -2,7 +2,7 @@
 
 import { IncubatorProvider } from "@/contexts/incubator-context";
 import { useUser } from "@/firebase/auth/use-user";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader } from "lucide-react";
 import VerifyEmailNotice from "@/components/auth/verify-email-notice";
@@ -18,6 +18,7 @@ export default function DashboardLayout({
 }) {
   const { user, isLoading: isUserLoading } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const [incubatorStatus, setIncubatorStatus] = useState<IncubatorStatus>('checking');
 
   useEffect(() => {
@@ -32,20 +33,25 @@ export default function DashboardLayout({
       get(incubatorRef).then((snapshot) => {
         if (snapshot.exists()) {
           setIncubatorStatus('exists');
+          if (pathname === '/dashboard/setup') {
+              router.push('/dashboard');
+          }
         } else {
           setIncubatorStatus('not-found');
-          router.push('/dashboard/setup');
+          if (pathname !== '/dashboard/setup') {
+            router.push('/dashboard/setup');
+          }
         }
       }).catch((error) => {
         console.error("Error checking for incubator:", error);
         setIncubatorStatus('error');
       });
     } else if (user && !user.emailVerified) {
-      // Don't check for incubator if email is not verified
-      setIncubatorStatus('exists'); // Prevent redirect loop
+      // Prevent redirect loop, just show email verification
+      setIncubatorStatus('exists'); 
     }
 
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, pathname]);
 
   if (isUserLoading || incubatorStatus === 'checking') {
     return (
@@ -66,6 +72,10 @@ export default function DashboardLayout({
             <p className="text-sm text-muted-foreground">Please try again later.</p>
         </div>
     )
+  }
+
+  if (incubatorStatus === 'not-found' && pathname === '/dashboard/setup') {
+      return <>{children}</>;
   }
 
   if (incubatorStatus === 'exists' && user && user.emailVerified) {
