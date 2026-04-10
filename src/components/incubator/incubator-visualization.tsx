@@ -38,7 +38,7 @@ export default function IncubatorVisualization() {
                 </p>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-x-3 gap-y-2 text-xs">
-                <StatusIndicator label="Heat Lamp" isActive={control.heater} />
+                <StatusIndicator label="Heat Lamp" isActive={control.heater} activeColor="bg-destructive" />
                 <StatusIndicator label="Ventilation" isActive={control.fan} />
                 <StatusIndicator label="Turning" isActive={control.motor} activeColor="bg-blue-500" />
                 <StatusIndicator label={`Water ${sensors.waterPercent}%`} isActive={sensors.waterPercent > 5} />
