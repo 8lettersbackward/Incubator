@@ -1,9 +1,12 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Download, Smartphone, Thermometer, AlertTriangle } from 'lucide-react';
 import Logo from '@/components/logo';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function LandingPage() {
+  const mobileAppImage = PlaceHolderImages.find(img => img.id === 'mobile-app-interface');
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -70,7 +73,20 @@ export default function LandingPage() {
         {/* PWA Install Section */}
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 flex flex-col md:flex-row items-center gap-12">
           <div className="md:w-1/2 flex justify-center items-center">
-            <Logo className="h-64 sm:h-80 md:h-96" />
+            {mobileAppImage ? (
+                <Image
+                    src={mobileAppImage.imageUrl}
+                    alt={mobileAppImage.description}
+                    width={600}
+                    height={500}
+                    data-ai-hint={mobileAppImage.imageHint}
+                    className="rounded-lg shadow-2xl border"
+                />
+            ) : (
+                <div className="w-[600px] h-[500px] bg-muted rounded-lg shadow-2xl border flex items-center justify-center">
+                    <p className="text-muted-foreground">App preview</p>
+                </div>
+            )}
           </div>
           <div className="md:w-1/2 text-center md:text-left">
             <h3 className="text-3xl font-bold mb-4">Get the Mobile App Experience</h3>
