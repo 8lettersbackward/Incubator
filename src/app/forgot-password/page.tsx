@@ -55,7 +55,6 @@ export default function ForgotPasswordPage() {
       });
       router.push('/login');
     } catch (error: any) {
-      console.error('Forgot Password Error:', error);
       toast({
         variant: 'destructive',
         title: 'Error',

@@ -62,7 +62,6 @@ export default function SignupPage() {
       });
       router.push('/dashboard');
     } catch (error: any) {
-      console.error('Signup Error:', error);
       let description = 'An unknown error occurred. Please try again.';
        if (error.code === 'auth/email-already-in-use') {
         description = 'This email address is already in use.';
