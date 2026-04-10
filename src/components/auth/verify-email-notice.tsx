@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -53,19 +54,24 @@ export default function VerifyEmailNotice() {
 
 
   const handleResend = async () => {
-    if (!user) return;
+    const auth = getAuth();
+    if (!auth.currentUser) return;
     setIsSending(true);
     try {
-      await sendEmailVerification(user);
+      await sendEmailVerification(auth.currentUser);
       toast({
         title: 'Verification Email Sent',
         description: 'A new verification link has been sent to your email address. Remember to check your spam folder.',
       });
-    } catch (error) {
+    } catch (error: any) {
+       let description = 'Failed to send verification email. Please try again later.';
+       if (error.code === 'auth/too-many-requests') {
+           description = 'You have requested a verification email too many times. Please wait a while before trying again.';
+       }
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to send verification email. Please try again later.',
+        description: description,
       });
     } finally {
       setIsSending(false);
