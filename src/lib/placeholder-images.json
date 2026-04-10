@@ -8,9 +8,9 @@
     },
     {
       "id": "mobile-app-interface",
-      "description": "Eggcelent dashboard displayed on a mobile phone screen.",
-      "imageUrl": "https://picsum.photos/seed/incubator-mobile/600/500",
-      "imageHint": "mobile app interface"
+      "description": "A square preview of the Eggcelent application dashboard.",
+      "imageUrl": "https://picsum.photos/seed/incubator-app/500/500",
+      "imageHint": "app dashboard"
     }
   ]
 }

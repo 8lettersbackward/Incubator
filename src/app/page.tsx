@@ -77,13 +77,13 @@ export default function LandingPage() {
                 <Image
                     src={mobileAppImage.imageUrl}
                     alt={mobileAppImage.description}
-                    width={600}
+                    width={500}
                     height={500}
                     data-ai-hint={mobileAppImage.imageHint}
-                    className="rounded-lg shadow-2xl border"
+                    className="rounded-lg shadow-2xl border aspect-square object-cover"
                 />
             ) : (
-                <div className="w-[600px] h-[500px] bg-muted rounded-lg shadow-2xl border flex items-center justify-center">
+                <div className="w-[500px] h-[500px] bg-muted rounded-lg shadow-2xl border flex items-center justify-center">
                     <p className="text-muted-foreground">App preview</p>
                 </div>
             )}
