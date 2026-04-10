@@ -50,7 +50,7 @@ export default function VerifyEmailNotice() {
         title: "Verification Successful!",
         description: "Your account is active. Redirecting to the dashboard...",
       });
-      router.push('/dashboard');
+      router.replace('/dashboard');
     } else {
       toast({
         title: "Not Verified Yet",
