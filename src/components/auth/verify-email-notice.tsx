@@ -18,23 +18,30 @@ export default function VerifyEmailNotice() {
   useEffect(() => {
     const auth = getAuth();
     
+    // If the user is logged in but their email is not verified...
     if (user && !user.emailVerified) {
+      //...start checking their verification status periodically.
       const interval = setInterval(async () => {
         // We need to get the current user from auth, not from the hook, 
         // as the hook's user object might be stale inside the interval.
         if (auth.currentUser) {
           await auth.currentUser.reload();
+          // If the email has been verified...
           if (auth.currentUser.emailVerified) {
+            // ...stop checking...
             clearInterval(interval);
+            // ...show a success message...
             toast({
               title: "Verification Successful!",
-              description: "Your account is active. Redirecting to the dashboard...",
+              description: "Your account is now active. You are being redirected to the dashboard.",
             });
+            // ...and redirect them to the dashboard.
             router.replace('/dashboard');
           }
         }
-      }, 5000); // Check every 5 seconds
+      }, 5000); // Check every 5 seconds.
 
+      // Clean up the interval when the component unmounts.
       return () => clearInterval(interval);
     }
   }, [user, router, toast]);
