@@ -6,7 +6,7 @@ import { getAuth, sendEmailVerification, signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader, MailCheck } from 'lucide-react';
+import { Loader, MailCheck, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function VerifyEmailNotice() {
@@ -14,6 +14,7 @@ export default function VerifyEmailNotice() {
   const { toast } = useToast();
   const router = useRouter();
   const [isSending, setIsSending] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
 
   const handleResend = async () => {
     if (!user) return;
@@ -22,7 +23,7 @@ export default function VerifyEmailNotice() {
       await sendEmailVerification(user);
       toast({
         title: 'Verification Email Sent',
-        description: 'A new verification link has been sent to your email address.',
+        description: 'A new verification link has been sent to your email address. Remember to check your spam folder.',
       });
     } catch (error) {
       toast({
@@ -33,6 +34,30 @@ export default function VerifyEmailNotice() {
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    const auth = getAuth();
+    if (!auth.currentUser) return;
+    
+    setIsChecking(true);
+    await auth.currentUser.reload();
+    
+    // The onAuthStateChanged listener in useUser will get the update,
+    // but we check here to give immediate feedback.
+    if (auth.currentUser.emailVerified) {
+      toast({
+        title: "Verification Successful!",
+        description: "Your account is active. Redirecting to the dashboard...",
+      });
+      router.push('/dashboard');
+    } else {
+      toast({
+        title: "Not Verified Yet",
+        description: "Please click the link in the email we sent you. Remember to check your spam folder.",
+      });
+    }
+    setIsChecking(false);
   };
 
   const handleLogout = async () => {
@@ -55,12 +80,19 @@ export default function VerifyEmailNotice() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Didn't receive an email? Check your spam folder or click below to resend.
+            Didn't receive an email? Check your spam folder or click a button below.
           </p>
-          <Button onClick={handleResend} disabled={isSending} className="w-full">
+          
+          <Button onClick={handleRefresh} disabled={isChecking} className="w-full">
+            {isChecking ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+            I've Verified My Email (Sync)
+          </Button>
+
+          <Button onClick={handleResend} disabled={isSending} className="w-full" variant="secondary">
             {isSending && <Loader className="mr-2 h-4 w-4 animate-spin" />}
             Resend Verification Email
           </Button>
+          
           <Button variant="outline" onClick={handleLogout} className="w-full">
             Log Out
           </Button>
