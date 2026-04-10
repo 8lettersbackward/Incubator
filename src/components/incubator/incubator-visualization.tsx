@@ -46,9 +46,9 @@ export default function IncubatorVisualization() {
             </div>
         </div>
 
-        <div className="flex-1 relative bg-black/20 border border-border rounded-lg p-4 flex flex-col items-center justify-center gap-4">
+        <div className="flex-1 relative bg-black/20 border border-border rounded-lg p-4 flex flex-col items-center justify-center">
           {/* Top components */}
-          <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
+          <div className="w-full max-w-md flex justify-between items-center px-1 mb-2">
             <Lightbulb className={cn("w-8 h-8 text-muted-foreground transition-all", control.heater && "text-destructive drop-shadow-[0_0_8px_hsl(var(--destructive))]")} />
             <Fan className={cn("w-8 h-8 text-muted-foreground transition-all", control.fan && "animate-spin text-yellow-400")} />
           </div>
