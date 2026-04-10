@@ -5,6 +5,7 @@ import { useUser } from "@/firebase/auth/use-user";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Loader } from "lucide-react";
+import VerifyEmailNotice from "@/components/auth/verify-email-notice";
 
 export default function DashboardLayout({
   children,
@@ -26,6 +27,10 @@ export default function DashboardLayout({
         <Loader className="w-12 h-12 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (user && !user.emailVerified) {
+    return <VerifyEmailNotice />;
   }
 
   return (
