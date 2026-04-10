@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '@/firebase/auth/use-user';
 import { getAuth, sendEmailVerification, signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader, MailCheck, RefreshCw } from 'lucide-react';
+import { Loader, MailCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function VerifyEmailNotice() {
@@ -14,7 +14,31 @@ export default function VerifyEmailNotice() {
   const { toast } = useToast();
   const router = useRouter();
   const [isSending, setIsSending] = useState(false);
-  const [isChecking, setIsChecking] = useState(false);
+
+  useEffect(() => {
+    const auth = getAuth();
+    
+    if (user && !user.emailVerified) {
+      const interval = setInterval(async () => {
+        // We need to get the current user from auth, not from the hook, 
+        // as the hook's user object might be stale inside the interval.
+        if (auth.currentUser) {
+          await auth.currentUser.reload();
+          if (auth.currentUser.emailVerified) {
+            clearInterval(interval);
+            toast({
+              title: "Verification Successful!",
+              description: "Your account is active. Redirecting to the dashboard...",
+            });
+            router.replace('/dashboard');
+          }
+        }
+      }, 5000); // Check every 5 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [user, router, toast]);
+
 
   const handleResend = async () => {
     if (!user) return;
@@ -36,30 +60,6 @@ export default function VerifyEmailNotice() {
     }
   };
 
-  const handleRefresh = async () => {
-    const auth = getAuth();
-    if (!auth.currentUser) return;
-    
-    setIsChecking(true);
-    await auth.currentUser.reload();
-    
-    // The onAuthStateChanged listener in useUser will get the update,
-    // but we check here to give immediate feedback.
-    if (auth.currentUser.emailVerified) {
-      toast({
-        title: "Verification Successful!",
-        description: "Your account is active. Redirecting to the dashboard...",
-      });
-      router.replace('/dashboard');
-    } else {
-      toast({
-        title: "Not Verified Yet",
-        description: "Please click the link in the email we sent you. Remember to check your spam folder.",
-      });
-    }
-    setIsChecking(false);
-  };
-
   const handleLogout = async () => {
     const auth = getAuth();
     await signOut(auth);
@@ -75,18 +75,14 @@ export default function VerifyEmailNotice() {
           </div>
           <CardTitle>Verify Your Email</CardTitle>
           <CardDescription>
-            We've sent a verification link to <strong>{user?.email}</strong>. Please check your inbox and follow the link to activate your account.
+            We've sent a verification link to <strong>{user?.email}</strong>. Please check your inbox (and spam folder!) and follow the link to activate your account.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Didn't receive an email? Check your spam folder or click a button below.
-          </p>
-          
-          <Button onClick={handleRefresh} disabled={isChecking} className="w-full">
-            {isChecking ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-            I've Verified My Email (Sync)
-          </Button>
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Loader className="h-4 w-4 animate-spin" />
+              <span>Waiting for verification... This page will refresh automatically.</span>
+          </div>
 
           <Button onClick={handleResend} disabled={isSending} className="w-full" variant="secondary">
             {isSending && <Loader className="mr-2 h-4 w-4 animate-spin" />}
