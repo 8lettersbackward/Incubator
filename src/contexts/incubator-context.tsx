@@ -43,6 +43,7 @@ export interface IncubatorData {
     numberOfEggs: number;
     currentDay: number;
     totalDays: number;
+    isIncubating: boolean;
   };
 }
 
@@ -65,7 +66,7 @@ interface IncubatorContextType {
   setCurrentDay: (day: number) => void;
   setTotalDays: (days: number) => void;
   resetIncubation: () => void;
-  startIncubation: () => void;
+  toggleIncubation: () => void;
   setNumberOfEggs: (count: number) => void;
 }
 
@@ -110,6 +111,7 @@ export const initialData: IncubatorData = {
     numberOfEggs: 56,
     currentDay: 1,
     totalDays: EGG_INCUBATION_PERIODS['Chicken'],
+    isIncubating: false,
   },
 };
 
@@ -262,33 +264,48 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   
   const setEggType = useCallback((eggType: string) => {
     if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to change egg type." }); return; }
+    if (data.incubation.isIncubating) { toast({ variant: "destructive", title: "Cycle Active", description: "Cannot change egg type during an active incubation cycle." }); return; }
     const newTotalDays = EGG_INCUBATION_PERIODS[eggType] || 21;
     updateValues({ 'incubation/eggType': eggType, 'incubation/currentDay': 1, 'incubation/totalDays': newTotalDays });
-  }, [isLocked, toast, updateValues]);
+  }, [isLocked, toast, updateValues, data.incubation.isIncubating]);
 
   const setCurrentDay = useCallback((day: number) => {
     if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to adjust incubation day." }); return; }
+    if (!data.incubation.isIncubating) { toast({ variant: "destructive", title: "Not Incubating", description: "You can only adjust the day during an active cycle." }); return; }
     if (day >= 1 && day <= data.incubation.totalDays) {
       setValue('incubation/currentDay', day);
     }
-  }, [isLocked, toast, data.incubation.totalDays, setValue]);
+  }, [isLocked, toast, data.incubation.totalDays, setValue, data.incubation.isIncubating]);
 
   const setTotalDays = (days: number) => {
     if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to change incubation duration." }); return; }
+    if (data.incubation.isIncubating) { toast({ variant: "destructive", title: "Cycle Active", description: "Cannot change duration during an active incubation cycle." }); return; }
     updateValues({ 'incubation/totalDays': days, 'incubation/currentDay': 1 });
   };
 
   const resetIncubation = useCallback(() => {
     if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to reset incubation." }); return; }
+    if (!data.incubation.isIncubating) { toast({ variant: "destructive", title: "Not Incubating", description: "Start an incubation cycle to reset." }); return; }
     setValue('incubation/currentDay', 1);
     toast({ title: "Incubation Reset", description: `The incubation period has been reset to Day 1.` });
-  }, [isLocked, toast, setValue]);
+  }, [isLocked, toast, setValue, data.incubation.isIncubating]);
 
-  const startIncubation = useCallback(() => {
-    if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to start the incubation cycle." }); return; }
-    setValue('incubation/currentDay', 1);
-    toast({ title: "Incubation Started", description: `A new incubation cycle for ${data.incubation.eggType} eggs has begun.` });
-  }, [isLocked, toast, data.incubation.eggType, setValue]);
+  const toggleIncubation = useCallback(() => {
+    if (isLocked) {
+      toast({ variant: "destructive", title: "System Locked", description: "Unlock to manage the incubation cycle." });
+      return;
+    }
+    const newStatus = !data.incubation.isIncubating;
+    if (newStatus) {
+      // Starting incubation
+      updateValues({ 'incubation/isIncubating': true, 'incubation/currentDay': 1 });
+      toast({ title: "Incubation Started", description: `The cycle for ${data.incubation.eggType} eggs has begun.` });
+    } else {
+      // Stopping incubation
+      setValue('incubation/isIncubating', false);
+      toast({ title: "Incubation Stopped", description: "The incubation cycle has been paused." });
+    }
+  }, [isLocked, toast, data.incubation.isIncubating, data.incubation.eggType, updateValues, setValue]);
 
   const setNumberOfEggs = useCallback((count: number) => {
     if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to change the number of eggs." }); return; }
@@ -331,7 +348,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     set(dbRef, pin);
   }, [getDbPath]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, startIncubation, setNumberOfEggs };
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, toggleIncubation, setNumberOfEggs };
 
   return (
     <IncubatorContext.Provider value={value}>

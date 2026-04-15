@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useIncubator } from "@/contexts/incubator-context";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Minus, Plus, RotateCcw, Play } from "lucide-react";
+import { CalendarDays, Minus, Plus, RotateCcw, Play, Square } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { Separator } from "../ui/separator";
@@ -12,8 +12,8 @@ import { Separator } from "../ui/separator";
 const presets = [14, 18, 21, 24, 28, 35];
 
 export default function IncubationProgress() {
-  const { data, setCurrentDay, setTotalDays, isLocked, resetIncubation, startIncubation } = useIncubator();
-  const { currentDay, totalDays, eggType } = data.incubation;
+  const { data, setCurrentDay, setTotalDays, isLocked, resetIncubation, toggleIncubation } = useIncubator();
+  const { currentDay, totalDays, eggType, isIncubating } = data.incubation;
   const [dayInput, setDayInput] = useState(String(currentDay));
   const [customDuration, setCustomDuration] = useState("");
 
@@ -59,6 +59,7 @@ export default function IncubationProgress() {
   };
 
   const getRemainingDaysText = () => {
+    if (!isIncubating) return 'Cycle not started';
     if (remainingDays < 0) return `Hatched`;
     if (remainingDays === 0) return 'Hatching Today';
     if (remainingDays === 1) return '1 day remaining';
@@ -77,9 +78,18 @@ export default function IncubationProgress() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 pt-2">
-        <Button onClick={startIncubation} disabled={isLocked} className="w-full" size="lg">
-          <Play className="mr-2 h-5 w-5" />
-          Start Incubation Cycle
+        <Button onClick={toggleIncubation} disabled={isLocked} className="w-full" size="lg" variant={isIncubating ? "destructive" : "default"}>
+           {isIncubating ? (
+            <>
+              <Square className="mr-2 h-5 w-5" />
+              Stop Incubation Cycle
+            </>
+          ) : (
+            <>
+              <Play className="mr-2 h-5 w-5" />
+              Start Incubation Cycle
+            </>
+          )}
         </Button>
         <Separator />
         <div className="text-center">
@@ -104,7 +114,7 @@ export default function IncubationProgress() {
                 variant={totalDays === days ? "default" : "outline"}
                 size="sm"
                 onClick={() => handlePresetClick(days)}
-                disabled={isLocked}
+                disabled={isLocked || isIncubating}
               >
                 {days} days
               </Button>
@@ -122,10 +132,10 @@ export default function IncubationProgress() {
               placeholder="Enter days"
               value={customDuration}
               onChange={(e) => setCustomDuration(e.target.value)}
-              disabled={isLocked}
+              disabled={isLocked || isIncubating}
               className="h-10 text-center"
             />
-            <Button onClick={handleSetCustomDuration} disabled={isLocked || !customDuration} className="h-10">Set</Button>
+            <Button onClick={handleSetCustomDuration} disabled={isLocked || isIncubating || !customDuration} className="h-10">Set</Button>
           </div>
         </div>
 
@@ -139,7 +149,7 @@ export default function IncubationProgress() {
                 size="icon"
                 className="h-10 w-10"
                 onClick={() => handleDayChange(-1)}
-                disabled={isLocked || currentDay <= 1}
+                disabled={isLocked || currentDay <= 1 || !isIncubating}
               >
                 <Minus className="h-4 w-4" />
                 <span className="sr-only">Previous Day</span>
@@ -152,14 +162,14 @@ export default function IncubationProgress() {
                 onBlur={handleDayInputBlur}
                 min={1}
                 max={totalDays}
-                disabled={isLocked}
+                disabled={isLocked || !isIncubating}
               />
               <Button
                 variant="outline"
                 size="icon"
                 className="h-10 w-10"
                 onClick={() => handleDayChange(1)}
-                disabled={isLocked || currentDay >= totalDays}
+                disabled={isLocked || currentDay >= totalDays || !isIncubating}
               >
                 <Plus className="h-4 w-4" />
                 <span className="sr-only">Next Day</span>
@@ -169,7 +179,7 @@ export default function IncubationProgress() {
                 variant="outline"
                 className="w-full"
                 onClick={resetIncubation}
-                disabled={isLocked}
+                disabled={isLocked || !isIncubating}
             >
                 <RotateCcw className="mr-2 h-4 w-4" />
                 Reset to Day 1
