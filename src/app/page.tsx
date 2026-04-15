@@ -8,22 +8,22 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <Logo className="h-20" />
-        <div className="flex items-center gap-2">
+        <Logo className="h-16 sm:h-20" />
+        <div className="flex items-center gap-2 sm:gap-4">
             <Button asChild variant="ghost">
               <Link href="/login">Log In</Link>
             </Button>
             <Button asChild>
-              <Link href="/signup">Sign Up <ArrowRight className="ml-2" /></Link>
+              <Link href="/signup">Sign Up <ArrowRight className="ml-2 h-4 w-4" /></Link>
             </Button>
         </div>
       </header>
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 text-center py-2">
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 text-center py-8 sm:py-12">
            <div className="flex justify-center mb-4">
-             <Logo className="h-96" />
+             <Logo className="h-64 sm:h-80 md:h-96" />
           </div>
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tighter mb-2">
             Smart Incubation, Simplified.
@@ -34,30 +34,30 @@ export default function LandingPage() {
           <Button size="lg" asChild>
             <Link href="/signup">
               Get Started for Free
-              <ArrowRight className="ml-2" />
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </section>
 
         {/* Feature Section */}
-        <section className="bg-card/50 py-20">
+        <section className="bg-card/50 py-16 sm:py-20">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
                     <h3 className="text-3xl font-bold">Total Control at Your Fingertips</h3>
                     <p className="text-muted-foreground mt-2">All the essential features for a successful hatch.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="bg-card p-6 rounded-lg text-center">
+                    <div className="bg-card p-6 rounded-lg text-center flex flex-col items-center">
                         <Thermometer className="w-12 h-12 text-primary mx-auto mb-4" />
                         <h4 className="text-xl font-semibold mb-2">Real-time Monitoring</h4>
                         <p className="text-muted-foreground">Live data streams for temperature and humidity ensure optimal conditions.</p>
                     </div>
-                    <div className="bg-card p-6 rounded-lg text-center">
+                    <div className="bg-card p-6 rounded-lg text-center flex flex-col items-center">
                         <AlertTriangle className="w-12 h-12 text-primary mx-auto mb-4" />
                         <h4 className="text-xl font-semibold mb-2">Smart Alerts</h4>
                         <p className="text-muted-foreground">Receive critical and warning alerts if conditions deviate from the ideal range.</p>
                     </div>
-                    <div className="bg-card p-6 rounded-lg text-center">
+                    <div className="bg-card p-6 rounded-lg text-center flex flex-col items-center">
                         <Smartphone className="w-12 h-12 text-primary mx-auto mb-4" />
                         <h4 className="text-xl font-semibold mb-2">Mobile Ready</h4>
                         <p className="text-muted-foreground">Install Eggcelent as a PWA on your phone for a native app experience.</p>
@@ -67,9 +67,9 @@ export default function LandingPage() {
         </section>
 
         {/* PWA Install Section */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 flex flex-col md:flex-row items-center gap-12">
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 flex flex-col md:flex-row items-center gap-12">
           <div className="md:w-1/2 flex justify-center items-center">
-            <div className="w-[500px] h-[500px] bg-card rounded-lg shadow-2xl border flex items-center justify-center">
+            <div className="w-full max-w-xs sm:max-w-sm md:max-w-md bg-card rounded-lg shadow-2xl border flex items-center justify-center p-4">
                 <Logo className="w-full h-full" />
             </div>
           </div>
@@ -93,7 +93,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-muted-foreground text-sm">
-        <p>&copy; {new Date().getFullYear()} Eggcelent. All rights reserved.</p>
+        <p suppressHydrationWarning>&copy; {new Date().getFullYear()} Eggcelent. All rights reserved.</p>
       </footer>
     </div>
   );
