@@ -132,16 +132,16 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     const incubatorRef = ref(database, `incubators/${user.uid}`);
     const unsubscribe = onValue(incubatorRef, (snapshot) => {
       if (snapshot.exists()) {
-        const remoteData = snapshot.val();
+        const remoteData = snapshot.val() || {};
         // Deep merge remote data with initialData to prevent crashes from missing fields
         const mergedData = {
           ...initialData,
           ...remoteData,
-          control: { ...initialData.control, ...remoteData.control },
-          sensors: { ...initialData.sensors, ...remoteData.sensors },
-          status: { ...initialData.status, ...remoteData.status },
-          alertSystem: { ...initialData.alertSystem, ...remoteData.alertSystem },
-          incubation: { ...initialData.incubation, ...remoteData.incubation },
+          control: { ...initialData.control, ...(remoteData.control || {}) },
+          sensors: { ...initialData.sensors, ...(remoteData.sensors || {}) },
+          status: { ...initialData.status, ...(remoteData.status || {}) },
+          alertSystem: { ...initialData.alertSystem, ...(remoteData.alertSystem || {}) },
+          incubation: { ...initialData.incubation, ...(remoteData.incubation || {}) },
         };
         setData(mergedData);
       } else {
