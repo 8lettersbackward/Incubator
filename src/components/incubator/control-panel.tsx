@@ -98,8 +98,8 @@ export default function ControlPanel() {
               label="Target Temperature"
               icon={<Thermometer className="w-5 h-5 text-primary" />}
               value={control.targetTemperature}
-              min={30}
-              max={45}
+              min={25}
+              max={50}
               step={0.1}
               safeMin={37.0}
               safeMax={38.0}
