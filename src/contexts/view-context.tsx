@@ -10,6 +10,7 @@ export type ViewType =
   | 'system' 
   | 'progress' 
   | 'components' 
+  | 'history'
   | null;
 
 interface ViewContextType {

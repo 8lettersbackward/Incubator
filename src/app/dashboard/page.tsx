@@ -9,6 +9,7 @@ import ComponentsGuide from '@/components/incubator/components-guide';
 import SystemControls from '@/components/incubator/system-controls';
 import IncubationProgress from '@/components/incubator/incubation-progress';
 import { ViewProvider, useView, ViewType } from '@/contexts/view-context';
+import HistoryLog from '@/components/incubator/history-log';
 
 const DashboardContent = () => {
   const { focusedView } = useView();
@@ -20,6 +21,7 @@ const DashboardContent = () => {
     system: <SystemControls />,
     progress: <IncubationProgress />,
     components: <ComponentsGuide />,
+    history: <HistoryLog />,
   };
   
   // Default to 'controls' on initial load (when focusedView is null) or if 'incubator' is selected
