@@ -10,8 +10,6 @@ interface EnvironmentSliderProps {
   value: number;
   min: number;
   max: number;
-  safeMin: number;
-  safeMax: number;
   step: number;
   unit: string;
   isSafe: boolean;
@@ -19,11 +17,8 @@ interface EnvironmentSliderProps {
   disabled?: boolean;
 }
 
-export default function EnvironmentSlider({ label, icon, value, min, max, safeMin, safeMax, step, unit, isSafe, onValueChange, disabled }: EnvironmentSliderProps) {
+export default function EnvironmentSlider({ label, icon, value, min, max, step, unit, isSafe, onValueChange, disabled }: EnvironmentSliderProps) {
   
-  const safeMinPercentage = Math.max(0, Math.min(100, ((safeMin - min) / (max - min)) * 100));
-  const safeWidthPercentage = Math.max(0, Math.min(100, ((safeMax - safeMin) / (max - min)) * 100));
-
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center">
@@ -39,19 +34,6 @@ export default function EnvironmentSlider({ label, icon, value, min, max, safeMi
         </span>
       </div>
       <div className="relative pt-2">
-        <div 
-          className="absolute h-2 w-full top-1/2 -translate-y-1/2 -z-10 pointer-events-none"
-        >
-            <div className="relative h-full w-full rounded-full bg-secondary">
-                <div
-                    className="absolute h-full rounded-full bg-primary/20"
-                    style={{
-                        left: `${safeMinPercentage}%`,
-                        width: `${safeWidthPercentage}%`,
-                    }}
-                />
-            </div>
-        </div>
          <Slider
           value={[value]}
           onValueChange={onValueChange}

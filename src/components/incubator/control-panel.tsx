@@ -101,8 +101,6 @@ export default function ControlPanel() {
               min={25}
               max={50}
               step={0.1}
-              safeMin={37.0}
-              safeMax={38.0}
               unit="°C"
               isSafe={alertSystem.temperatureState === 'NORMAL'}
               onValueChange={handleTempChange}
@@ -115,8 +113,6 @@ export default function ControlPanel() {
               min={20}
               max={80}
               step={1}
-              safeMin={40}
-              safeMax={60}
               unit="%"
               isSafe={alertSystem.humidityState === 'NORMAL'}
               onValueChange={handleHumidityChange}

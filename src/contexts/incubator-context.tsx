@@ -163,19 +163,16 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   useEffect(() => {
-    if (!database || !user || !data.sensors || !data.alertSystem) return;
+    if (!database || !user || !data.sensors || !data.alertSystem || !data.control) return;
 
     const { temperature, humidity } = data.sensors;
-    
-    const OPTIMAL_TEMP_NORMAL_MIN = 37.0;
-    const OPTIMAL_TEMP_NORMAL_MAX = 38.0;
-    const OPTIMAL_TEMP_CRITICAL_LOW = 36.5;
-    const OPTIMAL_TEMP_CRITICAL_HIGH = 38.5;
+    const { targetTemperature, targetHumidity } = data.control;
 
-    const OPTIMAL_HUMIDITY_NORMAL_MIN = 40;
-    const OPTIMAL_HUMIDITY_NORMAL_MAX = 60;
-    const OPTIMAL_HUMIDITY_WARNING_LOW = 35;
-    const OPTIMAL_HUMIDITY_WARNING_HIGH = 65;
+    // Define thresholds for deviation from target
+    const TEMP_WARNING_DEVIATION = 0.5;
+    const TEMP_CRITICAL_DEVIATION = 1.0;
+    const HUMIDITY_WARNING_DEVIATION = 5;
+    const HUMIDITY_CRITICAL_DEVIATION = 10;
     
     const newAlert: AlertSystem = {
       status: 'SYSTEM_OK',
@@ -185,32 +182,37 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       message: 'System stable. Optimal conditions.',
     };
 
-    if (temperature < OPTIMAL_TEMP_CRITICAL_LOW || temperature > OPTIMAL_TEMP_CRITICAL_HIGH) {
+    // Check Temperature Deviation
+    const tempDiff = temperature - targetTemperature;
+    if (Math.abs(tempDiff) > TEMP_CRITICAL_DEVIATION) {
       newAlert.status = 'CRITICAL';
-      newAlert.temperatureState = temperature < OPTIMAL_TEMP_CRITICAL_LOW ? 'LOW' : 'HIGH';
-    } else if (temperature < OPTIMAL_TEMP_NORMAL_MIN || temperature > OPTIMAL_TEMP_NORMAL_MAX) {
+      newAlert.temperatureState = tempDiff > 0 ? 'HIGH' : 'LOW';
+    } else if (Math.abs(tempDiff) > TEMP_WARNING_DEVIATION) {
       newAlert.status = 'WARNING';
-      newAlert.temperatureState = temperature < OPTIMAL_TEMP_NORMAL_MIN ? 'LOW' : 'HIGH';
+      newAlert.temperatureState = tempDiff > 0 ? 'HIGH' : 'LOW';
     }
 
-    if (humidity < OPTIMAL_HUMIDITY_WARNING_LOW || humidity > OPTIMAL_HUMIDITY_WARNING_HIGH) {
-      if(newAlert.status !== 'CRITICAL') newAlert.status = 'WARNING';
-      newAlert.humidityState = humidity < OPTIMAL_HUMIDITY_WARNING_LOW ? 'LOW' : 'HIGH';
-    } else if (humidity < OPTIMAL_HUMIDITY_NORMAL_MIN || humidity > OPTIMAL_HUMIDITY_NORMAL_MAX) {
+    // Check Humidity Deviation
+    const humidityDiff = humidity - targetHumidity;
+    if (Math.abs(humidityDiff) > HUMIDITY_CRITICAL_DEVIATION) {
+      newAlert.status = 'CRITICAL';
+      newAlert.humidityState = humidityDiff > 0 ? 'HIGH' : 'LOW';
+    } else if (Math.abs(humidityDiff) > HUMIDITY_WARNING_DEVIATION) {
       if (newAlert.status !== 'CRITICAL') newAlert.status = 'WARNING';
-      newAlert.humidityState = humidity < OPTIMAL_HUMIDITY_NORMAL_MIN ? 'LOW' : 'HIGH';
+      newAlert.humidityState = humidityDiff > 0 ? 'HIGH' : 'LOW';
     }
 
+    // Construct message based on state
     if (newAlert.status === 'CRITICAL') {
       newAlert.buzzer = true;
       const tempMsg = newAlert.temperatureState !== 'NORMAL' ? `Temp is ${newAlert.temperatureState.toLowerCase()}` : '';
       const humMsg = newAlert.humidityState !== 'NORMAL' ? `Humidity is ${newAlert.humidityState.toLowerCase()}` : '';
-      newAlert.message = `CRITICAL: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}. Immediate action required.`;
+      newAlert.message = `CRITICAL: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}. Deviation from target.`;
     } else if (newAlert.status === 'WARNING') {
       newAlert.buzzer = false;
       const tempMsg = newAlert.temperatureState !== 'NORMAL' ? `Temp is ${newAlert.temperatureState.toLowerCase()}` : '';
       const humMsg = newAlert.humidityState !== 'NORMAL' ? `Humidity is ${newAlert.humidityState.toLowerCase()}` : '';
-      newAlert.message = `Warning: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}. Conditions are suboptimal.`;
+      newAlert.message = `Warning: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}. Conditions deviating from target.`;
     }
 
     if (JSON.stringify(newAlert) !== JSON.stringify(data.alertSystem)) {
@@ -227,7 +229,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       const alertSystemRef = ref(database, `incubators/${user.uid}/alertSystem`);
       set(alertSystemRef, newAlert);
     }
-  }, [data.sensors, data.alertSystem, user, toast]);
+  }, [data.sensors, data.control, data.alertSystem, user, toast]);
 
   const getDbPath = useCallback((path: string) => {
     if (!user) return null;
