@@ -16,8 +16,8 @@ import { Input } from "../ui/input";
 import { useEffect, useState } from "react";
 
 export default function ControlPanel() {
-  const { data, isLocked, lock, setEggType, setSensorTemperature, setSensorHumidity, setNumberOfEggs } = useIncubator();
-  const { sensors, alertSystem, incubation } = data;
+  const { data, isLocked, lock, setEggType, setTargetTemperature, setTargetHumidity, setNumberOfEggs } = useIncubator();
+  const { alertSystem, incubation, control } = data;
   const { numberOfEggs, eggType } = incubation;
   const [eggInput, setEggInput] = useState(String(numberOfEggs || ''));
 
@@ -55,14 +55,14 @@ export default function ControlPanel() {
 
 
   const handleTempChange = (value: number[]) => {
-    if (setSensorTemperature) {
-      setSensorTemperature(value[0]);
+    if (setTargetTemperature) {
+      setTargetTemperature(value[0]);
     }
   };
 
   const handleHumidityChange = (value: number[]) => {
-    if (setSensorHumidity) {
-      setSensorHumidity(value[0]);
+    if (setTargetHumidity) {
+      setTargetHumidity(value[0]);
     }
   };
 
@@ -95,9 +95,9 @@ export default function ControlPanel() {
         >
           <div className="space-y-4">
             <EnvironmentSlider
-              label="Temperature"
+              label="Target Temperature"
               icon={<Thermometer className="w-5 h-5 text-primary" />}
-              value={sensors.temperature}
+              value={control.targetTemperature}
               min={30}
               max={45}
               step={0.1}
@@ -109,9 +109,9 @@ export default function ControlPanel() {
               disabled={isLocked}
             />
             <EnvironmentSlider
-              label="Humidity"
+              label="Target Humidity"
               icon={<Droplets className="w-5 h-5 text-primary" />}
-              value={sensors.humidity}
+              value={control.targetHumidity}
               min={20}
               max={80}
               step={1}
