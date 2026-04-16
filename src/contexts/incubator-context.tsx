@@ -124,6 +124,17 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // On initial mount for a user, ensure the buzzer is reset to OFF.
+    // This prevents the alarm from sounding immediately if the app was closed
+    // in a critical state. The alert-checking logic will then determine
+    // if it needs to be turned on again.
+    if (database && user) {
+      const buzzerRef = ref(database, `incubators/${user.uid}/alertSystem/buzzer`);
+      set(buzzerRef, false);
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (!database || !user) {
       setData(initialData); // Reset to initial if user logs out
       return;
