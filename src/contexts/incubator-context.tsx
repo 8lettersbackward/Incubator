@@ -89,7 +89,7 @@ export const initialData: IncubatorData = {
     fan: false,
     motor: false,
     cameraOn: true,
-    targetTemperature: 37.5,
+    targetTemperature: 35.0,
     targetHumidity: 55,
     accessCode: "",
   },
