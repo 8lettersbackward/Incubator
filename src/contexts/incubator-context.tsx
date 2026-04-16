@@ -169,8 +169,8 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     const { targetTemperature, targetHumidity } = data.control;
 
     // Define thresholds for deviation from target
-    const TEMP_WARNING_DEVIATION = 0.5;
-    const TEMP_CRITICAL_DEVIATION = 1.0;
+    const TEMP_WARNING_DEVIATION = 5;
+    const TEMP_CRITICAL_DEVIATION = 7.0;
     const HUMIDITY_WARNING_DEVIATION = 5;
     const HUMIDITY_CRITICAL_DEVIATION = 10;
     
