@@ -171,12 +171,13 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
 
     const { temperature, humidity } = data.sensors;
     const { targetTemperature, targetHumidity } = data.control;
+    const { alertSystem: currentAlert } = data;
 
     // Define thresholds for deviation from target
     const TEMP_WARNING_DEVIATION = 5;
     const TEMP_CRITICAL_DEVIATION = 7.0;
-    const HUMIDITY_WARNING_DEVIATION = 5;
-    const HUMIDITY_CRITICAL_DEVIATION = 10;
+    const HUMIDITY_WARNING_DEVIATION = 10;
+    const HUMIDITY_CRITICAL_DEVIATION = 20;
     
     const newAlert: AlertSystem = {
       status: 'SYSTEM_OK',
@@ -219,9 +220,12 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       newAlert.message = `Warning: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}. Conditions deviating from target.`;
     }
 
-    if (JSON.stringify(newAlert) !== JSON.stringify(data.alertSystem)) {
-      const previousStatus = data.alertSystem.status;
+    // Only update if the alert state has actually changed to prevent loops
+    if (JSON.stringify(newAlert) !== JSON.stringify(currentAlert)) {
+      const previousStatus = currentAlert.status;
       const newStatus = newAlert.status;
+
+      // Send a toast notification when a new warning/critical state is entered
       if (newStatus !== previousStatus && (newStatus === 'WARNING' || newStatus === 'CRITICAL')) {
         toast({
             variant: newStatus === 'CRITICAL' ? 'destructive' : 'default',
@@ -230,10 +234,11 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
             duration: 12000,
         });
       }
+      
       const alertSystemRef = ref(database, `incubators/${user.uid}/alertSystem`);
       set(alertSystemRef, newAlert);
     }
-  }, [data.sensors, data.control, user, toast]);
+  }, [data.sensors.temperature, data.sensors.humidity, data.control.targetTemperature, data.control.targetHumidity, user, toast]);
 
   const getDbPath = useCallback((path: string) => {
     if (!user) return null;
