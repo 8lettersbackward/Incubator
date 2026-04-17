@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Settings, LogOut } from "lucide-react";
@@ -50,7 +51,7 @@ export default function Header() {
     { label: "System Controls", view: "system" },
     { label: "Incubation Progress", view: "progress" },
     { label: "Components Guide", view: "components" },
-    { label: "History", view: "history" },
+    { label: "History and Logs", view: "history" },
   ];
 
   return (
