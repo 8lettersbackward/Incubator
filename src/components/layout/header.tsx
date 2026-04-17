@@ -50,8 +50,8 @@ export default function Header() {
     { label: "Hatching Chamber", view: "camera" },
     { label: "System Controls", view: "system" },
     { label: "Incubation Progress", view: "progress" },
-    { label: "Components Guide", view: "components" },
     { label: "History and Logs", view: "history" },
+    { label: "Components Guide", view: "components" },
   ];
 
   return (

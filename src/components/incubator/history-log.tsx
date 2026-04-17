@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -75,6 +74,7 @@ export default function HistoryLog() {
                                 <TableHead>Start Date</TableHead>
                                 <TableHead>Egg Type</TableHead>
                                 <TableHead>Outcome</TableHead>
+                                <TableHead className="text-center">Hatched</TableHead>
                                 <TableHead className="text-right sr-only">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -91,6 +91,9 @@ export default function HistoryLog() {
                                         }>
                                             {item.outcome}
                                         </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-center font-medium">
+                                      {item.outcome === 'In Progress' || item.outcome === 'Cancelled' ? '-' : `${item.hatchedCount}/${item.totalEggs}`}
                                     </TableCell>
                                     <TableCell className="text-right">
                                       <AlertDialog>
@@ -119,7 +122,7 @@ export default function HistoryLog() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">
+                                    <TableCell colSpan={5} className="h-24 text-center">
                                         <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
                                             <Inbox className="w-8 h-8" />
                                             No incubation history yet.
