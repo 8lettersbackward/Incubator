@@ -44,6 +44,8 @@ export interface IncubatorData {
     currentDay: number;
     totalDays: number;
     isIncubating: boolean;
+    liveFeedUrl?: string;
+    cameraLog?: { id: number; timestamp: string; image: string; event: string; }[];
   };
 }
 
@@ -53,7 +55,7 @@ interface IncubatorContextType {
   toggleFan: () => void;
   toggleHeater: () => void;
   toggleMotor: () => void;
-  toggleCamera: () => void;
+  toggleCamera: (checked: boolean) => void;
   refillWater: () => void;
   setEggType: (eggType: string) => void;
   unlock: (pin: string) => Promise<boolean>;
@@ -112,6 +114,8 @@ export const initialData: IncubatorData = {
     currentDay: 1,
     totalDays: EGG_INCUBATION_PERIODS['Chicken'],
     isIncubating: false,
+    liveFeedUrl: '',
+    cameraLog: [],
   },
 };
 
@@ -262,7 +266,44 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const toggleFan = useCallback(() => setValue('control/fan', !data.control.fan), [setValue, data.control.fan]);
   const toggleHeater = useCallback(() => setValue('control/heater', !data.control.heater), [setValue, data.control.heater]);
   const toggleMotor = useCallback(() => setValue('control/motor', !data.control.motor), [setValue, data.control.motor]);
-  const toggleCamera = useCallback(() => setValue('control/cameraOn', !data.control.cameraOn), [setValue, data.control.cameraOn]);
+  
+  const toggleCamera = useCallback((checked: boolean) => {
+    if (isLocked) {
+      toast({ variant: "destructive", title: "System Locked", description: "Unlock to use the camera." });
+      return;
+    }
+    
+    if (checked) { // Toggling ON - take a snapshot
+      const updates: any = {};
+      const newSnapshotUrl = `https://picsum.photos/seed/${Date.now()}/600/400`;
+
+      // Archive the current image if it exists
+      if (data.incubation.liveFeedUrl) {
+        const newLogEntry = {
+          id: Date.now(),
+          timestamp: new Date().toLocaleString(),
+          image: data.incubation.liveFeedUrl,
+          event: "Snapshot Archived",
+        };
+        // Prepend to the log
+        const newCameraLog = [newLogEntry, ...(data.incubation.cameraLog || [])];
+        updates['incubation/cameraLog'] = newCameraLog;
+      }
+      
+      updates['incubation/liveFeedUrl'] = newSnapshotUrl;
+      updates['control/cameraOn'] = true;
+      
+      updateValues(updates);
+      toast({
+        title: "Snapshot Captured",
+        description: "A new image has been taken.",
+      });
+
+    } else { // Toggling OFF
+      setValue('control/cameraOn', false);
+    }
+  }, [isLocked, toast, data.incubation.liveFeedUrl, data.incubation.cameraLog, updateValues, setValue]);
+
   const setTargetTemperature = useCallback((temp: number) => setValue('control/targetTemperature', temp), [setValue]);
   const setTargetHumidity = useCallback((humidity: number) => setValue('control/targetHumidity', humidity), [setValue]);
   const setSensorTemperature = useCallback((temp: number) => setValue('sensors/temperature', temp), [setValue]);

@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Video, VideoOff } from 'lucide-react';
 import { useIncubator } from '@/contexts/incubator-context';
 import { Switch } from '@/components/ui/switch';
@@ -10,7 +9,7 @@ import { Label } from "@/components/ui/label";
 
 export default function CameraConnectivity() {
   const { data, toggleCamera, isLocked } = useIncubator();
-  const cameraImage = PlaceHolderImages.find(img => img.id === 'camera-feed');
+  const liveImageUrl = data.incubation?.liveFeedUrl;
 
   return (
     <Card>
@@ -20,18 +19,18 @@ export default function CameraConnectivity() {
               <Video className="w-6 h-6 text-primary" />
               Hatching Chamber
           </CardTitle>
-          <CardDescription>{data.control.cameraOn ? "Live feed from inside the hatching chamber" : "Camera is currently turned off"}</CardDescription>
+          <CardDescription>{data.control.cameraOn ? "Latest snapshot from the hatching chamber" : "Camera is currently turned off"}</CardDescription>
         </div>
       </CardHeader>
       <CardContent>
-        {data.control.cameraOn && cameraImage ? (
+        {data.control.cameraOn && liveImageUrl ? (
           <div className="relative rounded-lg overflow-hidden border border-border">
             <Image
-              src={cameraImage.imageUrl}
-              alt={cameraImage.description}
+              key={liveImageUrl}
+              src={liveImageUrl}
+              alt="Latest snapshot from hatching chamber"
               width={600}
               height={400}
-              data-ai-hint={cameraImage.imageHint}
               className="aspect-video object-cover"
             />
           </div>

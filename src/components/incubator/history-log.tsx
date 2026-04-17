@@ -19,13 +19,14 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { History, Image as ImageIcon, Inbox } from 'lucide-react';
 import Image from 'next/image';
+import { useIncubator } from '@/contexts/incubator-context';
 
 const incubationHistory: { id: number; type: string; startDate: string; endDate: string; outcome: string; hatched: number; total: number; }[] = [];
 
-const cameraLogs: { id: number; timestamp: string; image: string; event: string; }[] = [];
-
-
 export default function HistoryLog() {
+  const { data } = useIncubator();
+  const cameraLogs = data.incubation?.cameraLog || [];
+
   return (
     <Card>
       <CardHeader>
