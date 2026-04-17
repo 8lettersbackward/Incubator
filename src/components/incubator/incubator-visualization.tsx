@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { useIncubator } from "@/contexts/incubator-context";
-import { Fan, Lightbulb, Egg as EggIcon } from "lucide-react";
+import { Fan, Lightbulb, Egg as EggIcon, CloudDrizzle } from "lucide-react";
 import StatusIndicator from "@/components/shared/status-indicator";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +41,7 @@ export default function IncubatorVisualization() {
                 <StatusIndicator label="Heat Lamp" isActive={control.heater} activeColor="bg-destructive shadow-[0_0_8px_2px_hsl(var(--destructive))]" />
                 <StatusIndicator label="Ventilation" isActive={control.fan} activeColor="bg-yellow-400 shadow-[0_0_8px_2px_#facc15]" />
                 <StatusIndicator label="Turning" isActive={control.motor} activeColor="bg-chart-1 shadow-[0_0_8px_2px_hsl(var(--chart-1))]" />
+                <StatusIndicator label="Mist" isActive={control.mist} activeColor="bg-chart-3 shadow-[0_0_8px_2px_hsl(var(--chart-3))]" />
                 <StatusIndicator label={`Water ${sensors.waterPercent}%`} isActive={sensors.waterPercent > 5} />
                 <StatusIndicator label="Camera On" isActive={control.cameraOn} activeColor="bg-orange-500 shadow-[0_0_8px_2px_#f97316]" />
             </div>
@@ -48,8 +49,9 @@ export default function IncubatorVisualization() {
 
         <div className="flex-1 relative bg-black/20 border border-border rounded-lg p-4 flex flex-col items-center justify-center">
           {/* Top components */}
-          <div className="w-full max-w-md flex justify-between items-center px-1 mb-2">
+          <div className="w-full max-w-md flex justify-around items-center px-1 mb-2">
             <Lightbulb className={cn("w-8 h-8 text-muted-foreground transition-all", control.heater && "text-destructive drop-shadow-[0_0_8px_hsl(var(--destructive))]")} />
+            <CloudDrizzle className={cn("w-8 h-8 text-muted-foreground transition-all", control.mist && "text-chart-3 drop-shadow-[0_0_8px_hsl(var(--chart-3))]")} />
             <Fan className={cn("w-8 h-8 text-muted-foreground transition-all", control.fan && "animate-spin text-yellow-400")} />
           </div>
           
