@@ -166,11 +166,11 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   useEffect(() => {
-    if (!database || !user || !data.sensors || !data.alertSystem || !data.control) return;
+    if (!database || !user || !data.sensors || !data.control) return;
 
     const { temperature, humidity } = data.sensors;
     const { targetTemperature, targetHumidity } = data.control;
-    const { alertSystem: currentAlert } = data;
+    const currentAlert = data.alertSystem;
 
     // Define thresholds for deviation from target as per user request
     const TEMP_ALERT_DEVIATION = 5.0;
@@ -208,7 +208,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
 
     // Only update if the alert state has actually changed to prevent loops
     if (JSON.stringify(newAlert) !== JSON.stringify(currentAlert)) {
-      const previousStatus = currentAlert.status;
+      const previousStatus = currentAlert?.status;
       const newStatus = newAlert.status;
 
       // Send a toast notification when a new critical state is entered
@@ -224,7 +224,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       const alertSystemRef = ref(database, `incubators/${user.uid}/alertSystem`);
       set(alertSystemRef, newAlert);
     }
-  }, [data.sensors.temperature, data.sensors.humidity, data.control.targetTemperature, data.control.targetHumidity, data.alertSystem, user, toast]);
+  }, [data.sensors.temperature, data.sensors.humidity, data.control.targetTemperature, data.control.targetHumidity, user, toast, data.alertSystem]);
 
   const getDbPath = useCallback((path: string) => {
     if (!user) return null;
