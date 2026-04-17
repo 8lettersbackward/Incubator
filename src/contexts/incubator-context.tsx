@@ -16,6 +16,17 @@ export interface AlertSystem {
   message: string;
 }
 
+export interface IncubationHistoryEntry {
+  id: number;
+  startDate: string;
+  endDate: string | null;
+  eggType: string;
+  totalDays: number;
+  outcome: 'In Progress' | 'Cancelled' | 'Hatched' | 'Failed';
+  hatchedCount: number;
+  totalEggs: number;
+}
+
 export interface IncubatorData {
   name?: string;
   status: {
@@ -46,6 +57,8 @@ export interface IncubatorData {
     isIncubating: boolean;
     liveFeedUrl?: string;
     cameraLog?: { id: number; timestamp: string; image: string; event: string; }[];
+    incubationHistory?: IncubationHistoryEntry[];
+    activeCycleId?: number | null;
   };
 }
 
@@ -71,6 +84,7 @@ interface IncubatorContextType {
   setNumberOfEggs: (count: number) => void;
   deleteCameraLogEntry: (logId: number) => void;
   clearCameraLog: () => void;
+  deleteHistoryEntry: (historyId: number) => void;
 }
 
 export const EGG_INCUBATION_PERIODS: { [key: string]: number } = {
@@ -117,6 +131,8 @@ export const initialData: IncubatorData = {
     isIncubating: false,
     liveFeedUrl: '',
     cameraLog: [],
+    incubationHistory: [],
+    activeCycleId: null,
   },
 };
 
@@ -342,16 +358,49 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     const newStatus = !data.incubation.isIncubating;
-    if (newStatus) {
-      // Starting incubation
-      updateValues({ 'incubation/isIncubating': true, 'incubation/currentDay': 1 });
-      toast({ title: "Incubation Started", description: `The cycle for ${data.incubation.eggType} eggs has begun.` });
-    } else {
-      // Stopping incubation
-      setValue('incubation/isIncubating', false);
-      toast({ title: "Incubation Stopped", description: "The incubation cycle has been paused." });
+    const updates: { [key: string]: any } = {};
+    const history = Array.isArray(data.incubation.incubationHistory) ? [...data.incubation.incubationHistory] : Object.values(data.incubation.incubationHistory || []);
+
+    if (newStatus) { // Starting incubation
+      const newEntry: IncubationHistoryEntry = {
+        id: Date.now(),
+        startDate: new Date().toISOString(),
+        endDate: null,
+        eggType: data.incubation.eggType,
+        totalDays: data.incubation.totalDays,
+        outcome: 'In Progress',
+        hatchedCount: 0,
+        totalEggs: data.incubation.numberOfEggs,
+      };
+      
+      updates['incubation/isIncubating'] = true;
+      updates['incubation/currentDay'] = 1;
+      updates['incubation/activeCycleId'] = newEntry.id;
+      updates['incubation/incubationHistory'] = [newEntry, ...history];
+
+      updateValues(updates);
+      toast({ title: "Incubation Started", description: `The cycle for ${data.incubation.eggType} eggs has begun and logged.` });
+
+    } else { // Stopping/Cancelling incubation
+      const activeId = data.incubation.activeCycleId;
+      const activeCycleIndex = history.findIndex(h => h.id === activeId);
+
+      if (activeCycleIndex > -1) {
+        history[activeCycleIndex] = {
+          ...history[activeCycleIndex],
+          outcome: 'Cancelled',
+          endDate: new Date().toISOString(),
+        };
+        updates['incubation/incubationHistory'] = history;
+      }
+      
+      updates['incubation/isIncubating'] = false;
+      updates['incubation/activeCycleId'] = null;
+
+      updateValues(updates);
+      toast({ title: "Incubation Stopped", description: "The incubation cycle has been cancelled and logged." });
     }
-  }, [isLocked, toast, data.incubation.isIncubating, data.incubation.eggType, updateValues, setValue]);
+  }, [isLocked, toast, data.incubation, updateValues]);
 
   const setNumberOfEggs = useCallback((count: number) => {
     if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to change the number of eggs." }); return; }
@@ -424,7 +473,36 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       });
   }, [getDbPath, toast]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, toggleIncubation, setNumberOfEggs, deleteCameraLogEntry, clearCameraLog };
+  const deleteHistoryEntry = useCallback((historyId: number) => {
+    const fullPath = getDbPath('incubation/incubationHistory');
+    if (!database || !fullPath) return;
+
+    const currentHistory = data.incubation.incubationHistory || [];
+    const historyAsArray = Array.isArray(currentHistory) ? currentHistory : Object.values(currentHistory);
+    const newHistory = historyAsArray.filter(entry => entry.id !== historyId);
+    
+    if (data.incubation.activeCycleId === historyId) {
+        const updates: { [key: string]: any } = {};
+        updates['incubation/incubationHistory'] = newHistory;
+        updates['incubation/isIncubating'] = false;
+        updates['incubation/activeCycleId'] = null;
+        updateValues(updates);
+        toast({
+          variant: 'destructive',
+          title: "Active Cycle Deleted",
+          description: "The active incubation cycle has been deleted."
+      });
+    } else {
+        const dbRef = ref(database, fullPath);
+        set(dbRef, newHistory);
+        toast({
+            title: "History Entry Deleted",
+            description: "The incubation record has been removed."
+        });
+    }
+  }, [getDbPath, data.incubation, toast, updateValues]);
+
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, toggleIncubation, setNumberOfEggs, deleteCameraLogEntry, clearCameraLog, deleteHistoryEntry };
 
   return (
     <IncubatorContext.Provider value={value}>

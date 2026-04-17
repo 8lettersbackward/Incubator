@@ -20,13 +20,14 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { History, Image as ImageIcon, Inbox, Trash2, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
-import { useIncubator } from '@/contexts/incubator-context';
+import { useIncubator, IncubationHistoryEntry } from '@/contexts/incubator-context';
 import {
   Dialog,
   DialogContent,
   DialogTrigger,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '../ui/button';
 import {
@@ -40,13 +41,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { format, parseISO } from 'date-fns';
 
-const incubationHistory: { id: number; type: string; startDate: string; endDate: string; outcome: string; hatched: number; total: number; }[] = [];
 
 export default function HistoryLog() {
-  const { data, deleteCameraLogEntry, clearCameraLog } = useIncubator();
+  const { data, deleteCameraLogEntry, clearCameraLog, deleteHistoryEntry } = useIncubator();
   const rawCameraLogs = data.incubation?.cameraLog || [];
   const cameraLogs = (Array.isArray(rawCameraLogs) ? rawCameraLogs : Object.values(rawCameraLogs)).filter(log => log && log.id);
+
+  const rawHistory = data.incubation?.incubationHistory || [];
+  const incubationHistory = (Array.isArray(rawHistory) ? rawHistory : Object.values(rawHistory)).sort((a, b) => b.id - a.id);
+
 
   return (
     <Card>
@@ -71,25 +76,52 @@ export default function HistoryLog() {
                                 <TableHead>Egg Type</TableHead>
                                 <TableHead>Outcome</TableHead>
                                 <TableHead className="text-right">Hatched</TableHead>
+                                <TableHead className="text-right sr-only">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {incubationHistory.length > 0 ? (
                                 incubationHistory.map((item) => (
                                 <TableRow key={item.id}>
-                                    <TableCell>{item.startDate}</TableCell>
-                                    <TableCell>{item.type}</TableCell>
+                                    <TableCell>{format(parseISO(item.startDate), 'MMM d, yyyy')}</TableCell>
+                                    <TableCell>{item.eggType}</TableCell>
                                     <TableCell>
-                                        <Badge variant={item.outcome === 'Successful Hatch' ? 'default' : 'destructive'}>
+                                        <Badge variant={
+                                            item.outcome === 'Hatched' ? 'default' : 
+                                            item.outcome === 'In Progress' ? 'secondary' : 'destructive'
+                                        }>
                                             {item.outcome}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="text-right">{`${item.hatched}/${item.total}`}</TableCell>
+                                    <TableCell className="text-right">{`${item.hatchedCount}/${item.totalEggs}`}</TableCell>
+                                    <TableCell className="text-right">
+                                      <AlertDialog>
+                                          <AlertDialogTrigger asChild>
+                                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                                                  <Trash2 className="w-4 h-4" />
+                                              </Button>
+                                          </AlertDialogTrigger>
+                                          <AlertDialogContent>
+                                              <AlertDialogHeader>
+                                                   <AlertDialogTitle>Delete History Entry?</AlertDialogTitle>
+                                                  <AlertDialogDescription>
+                                                      Are you sure you want to delete this record? This action cannot be undone.
+                                                  </AlertDialogDescription>
+                                              </AlertDialogHeader>
+                                              <AlertDialogFooter>
+                                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                  <AlertDialogAction onClick={() => deleteHistoryEntry(item.id)} className="bg-destructive hover:bg-destructive/90">
+                                                      Delete
+                                                  </AlertDialogAction>
+                                              </AlertDialogFooter>
+                                          </AlertDialogContent>
+                                      </AlertDialog>
+                                    </TableCell>
                                 </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">
+                                    <TableCell colSpan={5} className="h-24 text-center">
                                         <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
                                             <Inbox className="w-8 h-8" />
                                             No incubation history yet.
@@ -155,6 +187,7 @@ export default function HistoryLog() {
                                     <DialogContent className="p-0 border-0 max-w-4xl bg-transparent shadow-none">
                                         <DialogHeader className="sr-only">
                                             <DialogTitle>Snapshot from {log.timestamp}</DialogTitle>
+                                            <DialogDescription>A snapshot from the incubation chamber.</DialogDescription>
                                         </DialogHeader>
                                         {log.image ? (
                                             <Image src={log.image} alt={log.event} width={1200} height={800} className="w-full h-auto object-contain rounded-lg" />
