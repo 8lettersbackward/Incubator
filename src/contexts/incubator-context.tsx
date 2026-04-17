@@ -12,7 +12,6 @@ export interface AlertSystem {
   status: 'SYSTEM_OK' | 'WARNING' | 'CRITICAL';
   temperatureState: 'NORMAL' | 'HIGH' | 'LOW';
   humidityState: 'NORMAL' | 'HIGH' | 'LOW';
-  waterState: 'NORMAL' | 'LOW';
   buzzer: boolean;
   message: string;
 }
@@ -105,7 +104,6 @@ export const initialData: IncubatorData = {
     status: "SYSTEM_OK",
     temperatureState: "NORMAL",
     humidityState: "NORMAL",
-    waterState: "NORMAL",
     buzzer: false,
     message: "System stable. Optimal conditions.",
   },
@@ -170,19 +168,17 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!database || !user || !data.sensors || !data.control) return;
 
-    const { temperature, humidity, waterPercent } = data.sensors;
+    const { temperature, humidity } = data.sensors;
     const { targetTemperature, targetHumidity } = data.control;
     const currentAlert = data.alertSystem;
 
     const TEMP_ALERT_DEVIATION = 5.0;
     const HUMIDITY_ALERT_DEVIATION = 20;
-    const WATER_LEVEL_CRITICAL_THRESHOLD = 20;
 
     const newAlert: AlertSystem = {
       status: 'SYSTEM_OK',
       temperatureState: 'NORMAL',
       humidityState: 'NORMAL',
-      waterState: 'NORMAL',
       buzzer: false,
       message: 'System stable. Optimal conditions.',
     };
@@ -205,15 +201,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       }
       newAlert.humidityState = humidityDiff > 0 ? 'HIGH' : 'LOW';
       messages.push(`Humidity is ${newAlert.humidityState.toLowerCase()}`);
-    }
-    
-    // Check Water Level
-    if (waterPercent < WATER_LEVEL_CRITICAL_THRESHOLD) {
-      if (newAlert.status !== 'CRITICAL') {
-        newAlert.status = 'CRITICAL';
-      }
-      newAlert.waterState = 'LOW';
-      messages.push('Water level is low');
     }
 
     // Construct message based on state
@@ -240,7 +227,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       const alertSystemRef = ref(database, `incubators/${user.uid}/alertSystem`);
       set(alertSystemRef, newAlert);
     }
-  }, [data.sensors.temperature, data.sensors.humidity, data.sensors.waterPercent, data.control.targetTemperature, data.control.targetHumidity, user, toast, data.alertSystem]);
+  }, [data.sensors.temperature, data.sensors.humidity, data.control.targetTemperature, data.control.targetHumidity, user, toast, data.alertSystem]);
 
   const getDbPath = useCallback((path: string) => {
     if (!user) return null;
@@ -293,7 +280,9 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
           event: "Snapshot Archived",
         };
         // Prepend to the log
-        const newCameraLog = [newLogEntry, ...(data.incubation.cameraLog || [])];
+        const currentLog = data.incubation.cameraLog;
+        const logAsArray = currentLog ? (Array.isArray(currentLog) ? currentLog : Object.values(currentLog)) : [];
+        const newCameraLog = [newLogEntry, ...logAsArray];
         updates['incubation/cameraLog'] = newCameraLog;
       }
       
