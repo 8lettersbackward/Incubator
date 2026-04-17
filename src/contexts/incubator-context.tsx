@@ -191,7 +191,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     if (!database || !user || !data.sensors || !data.control) return;
   
     const { temperature, humidity } = data.sensors;
-    const { heater, fan, targetTemperature, targetHumidity } = data.control;
+    const { heater, fan, mist, targetTemperature, targetHumidity } = data.control;
     const currentAlert = data.alertSystem;
   
     const updates: { [key: string]: any } = {};
@@ -275,6 +275,23 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       updates['control/fan'] = newFanState;
     }
   
+    // --- Automated Humidity Control Logic (Mist) ---
+    const HUMIDITY_LOWER_BOUND = targetHumidity - 5;
+    let newMistState = mist;
+
+    if (humidity < HUMIDITY_LOWER_BOUND) {
+      // Humidity is too low, turn mist on.
+      newMistState = true;
+    } else if (humidity >= targetHumidity) {
+      // Humidity is at or above target, turn mist off.
+      newMistState = false;
+    }
+    // In the dead zone between lower bound and target, state remains unchanged.
+
+    if (newMistState !== mist) {
+      updates['control/mist'] = newMistState;
+    }
+
     // If there are any changes, send a single update to Firebase.
     if (Object.keys(updates).length > 0) {
       const incubatorRef = ref(database, `incubators/${user.uid}`);
@@ -290,6 +307,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       data.alertSystem,
       data.control.heater,
       data.control.fan,
+      data.control.mist,
     ]);
 
   const getDbPath = useCallback((path: string) => {
