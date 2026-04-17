@@ -37,6 +37,7 @@ export interface IncubatorData {
     fan: boolean;
     motor: boolean;
     cameraOn: boolean;
+    mist: boolean;
     targetTemperature: number;
     targetHumidity: number;
     accessCode: string;
@@ -67,6 +68,7 @@ interface IncubatorContextType {
   toggleFan: () => void;
   toggleHeater: () => void;
   toggleMotor: () => void;
+  toggleMist: () => void;
   toggleCamera: (checked: boolean) => void;
   setEggType: (eggType: string) => void;
   unlock: (pin: string) => Promise<boolean>;
@@ -105,6 +107,7 @@ export const initialData: IncubatorData = {
     fan: false,
     motor: false,
     cameraOn: true,
+    mist: false,
     targetTemperature: 35.0,
     targetHumidity: 50,
     accessCode: "",
@@ -320,6 +323,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const toggleFan = useCallback(() => setValue('control/fan', !data.control.fan), [setValue, data.control.fan]);
   const toggleHeater = useCallback(() => setValue('control/heater', !data.control.heater), [setValue, data.control.heater]);
   const toggleMotor = useCallback(() => setValue('control/motor', !data.control.motor), [setValue, data.control.motor]);
+  const toggleMist = useCallback(() => setValue('control/mist', !data.control.mist), [setValue, data.control.mist]);
   
   const toggleCamera = useCallback((checked: boolean) => {
     if (isLocked) {
@@ -542,7 +546,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [getDbPath, data.incubation, toast, updateValues]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, toggleIncubation, setNumberOfEggs, deleteCameraLogEntry, clearCameraLog, deleteHistoryEntry };
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleMist, toggleCamera, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, toggleIncubation, setNumberOfEggs, deleteCameraLogEntry, clearCameraLog, deleteHistoryEntry };
 
   return (
     <IncubatorContext.Provider value={value}>

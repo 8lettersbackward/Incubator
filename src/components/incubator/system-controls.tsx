@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useIncubator } from "@/contexts/incubator-context";
-import { Lightbulb, Fan, RotateCw, LockIcon } from "lucide-react";
+import { Lightbulb, Fan, RotateCw, LockIcon, CloudDrizzle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ControlItem = ({ icon, label, description, checked, onCheckedChange, disabled }: { icon: React.ReactNode; label: string; description: string; checked: boolean; onCheckedChange: () => void; disabled: boolean; }) => (
@@ -21,7 +21,7 @@ const ControlItem = ({ icon, label, description, checked, onCheckedChange, disab
 );
 
 export default function SystemControls() {
-    const { data, isLocked, toggleHeater, toggleFan, toggleMotor } = useIncubator();
+    const { data, isLocked, toggleHeater, toggleFan, toggleMotor, toggleMist } = useIncubator();
 
     const controls = [
         {
@@ -44,6 +44,13 @@ export default function SystemControls() {
             description: "Automatic egg rotation",
             checked: data.control.motor,
             onCheckedChange: toggleMotor,
+        },
+        {
+            icon: <CloudDrizzle className="w-6 h-6 text-primary" />,
+            label: "Mist Generator",
+            description: "Humidity misting system",
+            checked: data.control.mist,
+            onCheckedChange: toggleMist,
         },
     ];
 
