@@ -170,7 +170,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!database || !user || !data.sensors || !data.control) return;
 
-    const { temperature, humidity, waterPercent } = data.sensors;
+    const { temperature, humidity } = data.sensors;
     const { targetTemperature, targetHumidity } = data.control;
     const currentAlert = data.alertSystem;
 
@@ -229,7 +229,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       const alertSystemRef = ref(database, `incubators/${user.uid}/alertSystem`);
       set(alertSystemRef, newAlert);
     }
-  }, [data.sensors.temperature, data.sensors.humidity, data.sensors.waterPercent, data.control.targetTemperature, data.control.targetHumidity, user, toast, data.alertSystem]);
+  }, [data.sensors.temperature, data.sensors.humidity, data.control.targetTemperature, data.control.targetHumidity, user, toast, data.alertSystem]);
 
   const getDbPath = useCallback((path: string) => {
     if (!user) return null;
@@ -281,7 +281,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
           image: data.incubation.liveFeedUrl,
           event: "Snapshot Archived",
         };
-        // Prepend to the log, safely handling object or array
+        // Prepend to the log, safely handling object or array from Firebase
         const currentLog = data.incubation.cameraLog || [];
         const logAsArray = Array.isArray(currentLog) ? currentLog : Object.values(currentLog);
         const newCameraLog = [newLogEntry, ...logAsArray];

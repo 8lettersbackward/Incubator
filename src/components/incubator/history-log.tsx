@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -45,7 +46,7 @@ const incubationHistory: { id: number; type: string; startDate: string; endDate:
 export default function HistoryLog() {
   const { data, deleteCameraLogEntry, clearCameraLog } = useIncubator();
   const rawCameraLogs = data.incubation?.cameraLog || [];
-  const cameraLogs = Array.isArray(rawCameraLogs) ? rawCameraLogs : Object.values(rawCameraLogs);
+  const cameraLogs = (Array.isArray(rawCameraLogs) ? rawCameraLogs : Object.values(rawCameraLogs)).filter(log => log && log.id);
 
   return (
     <Card>
@@ -142,14 +143,26 @@ export default function HistoryLog() {
                                 <Dialog>
                                     <DialogTrigger asChild>
                                         <div className="relative rounded-md overflow-hidden aspect-video mb-2 cursor-pointer">
-                                            <Image src={log.image} alt={log.event} fill className="object-cover transition-transform hover:scale-105" />
+                                            {log.image ? (
+                                                <Image src={log.image} alt={log.event} fill className="object-cover transition-transform hover:scale-105" />
+                                            ) : (
+                                                <div className="flex items-center justify-center h-full bg-muted">
+                                                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                                                </div>
+                                            )}
                                         </div>
                                     </DialogTrigger>
                                     <DialogContent className="p-0 border-0 max-w-4xl bg-transparent shadow-none">
                                         <DialogHeader className="sr-only">
                                             <DialogTitle>Snapshot from {log.timestamp}</DialogTitle>
                                         </DialogHeader>
-                                        <Image src={log.image} alt={log.event} width={1200} height={800} className="w-full h-auto object-contain rounded-lg" />
+                                        {log.image ? (
+                                            <Image src={log.image} alt={log.event} width={1200} height={800} className="w-full h-auto object-contain rounded-lg" />
+                                        ) : (
+                                            <div className="flex items-center justify-center h-64 bg-muted">
+                                                <p className="text-muted-foreground">No image available</p>
+                                            </div>
+                                        )}
                                     </DialogContent>
                                 </Dialog>
                                 <div className="flex justify-between items-center">

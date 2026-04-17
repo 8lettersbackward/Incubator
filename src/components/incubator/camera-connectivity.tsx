@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from 'next/image';
@@ -9,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 
@@ -43,6 +46,9 @@ export default function CameraConnectivity() {
               </div>
             </DialogTrigger>
             <DialogContent className="p-0 border-0 max-w-4xl bg-transparent shadow-none">
+               <DialogHeader className="sr-only">
+                <DialogTitle>Latest snapshot from hatching chamber</DialogTitle>
+              </DialogHeader>
               <Image
                 src={liveImageUrl}
                 alt="Latest snapshot from hatching chamber"
