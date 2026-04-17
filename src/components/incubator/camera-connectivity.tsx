@@ -44,7 +44,7 @@ export default function CameraConnectivity() {
       </CardContent>
        <CardFooter className="flex items-center justify-center pt-6">
         <div className="flex items-center gap-2">
-            <Label htmlFor="camera-toggle" className="text-sm font-medium">Camera Power</Label>
+            <Label htmlFor="camera-toggle" className="text-sm font-medium">Camera</Label>
             <Switch id="camera-toggle" checked={data.control.cameraOn} onCheckedChange={toggleCamera} disabled={isLocked} />
         </div>
       </CardFooter>
