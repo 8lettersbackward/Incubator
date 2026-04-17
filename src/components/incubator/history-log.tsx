@@ -20,6 +20,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { History, Image as ImageIcon, Inbox } from 'lucide-react';
 import Image from 'next/image';
 import { useIncubator } from '@/contexts/incubator-context';
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const incubationHistory: { id: number; type: string; startDate: string; endDate: string; outcome: string; hatched: number; total: number; }[] = [];
 
@@ -91,9 +96,16 @@ export default function HistoryLog() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {cameraLogs.map((log) => (
                             <div key={log.id} className="border rounded-lg p-2 bg-card/50">
-                                <div className="relative rounded-md overflow-hidden aspect-video mb-2">
-                                    <Image src={log.image} alt={log.event} fill className="object-cover" />
-                                </div>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <div className="relative rounded-md overflow-hidden aspect-video mb-2 cursor-pointer">
+                                            <Image src={log.image} alt={log.event} fill className="object-cover transition-transform hover:scale-105" />
+                                        </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="p-0 border-0 max-w-4xl bg-transparent shadow-none">
+                                        <Image src={log.image} alt={log.event} width={1200} height={800} className="w-full h-auto object-contain rounded-lg" />
+                                    </DialogContent>
+                                </Dialog>
                                 <p className="text-sm font-medium">{log.event}</p>
                                 <p className="text-xs text-muted-foreground">{log.timestamp}</p>
                             </div>
