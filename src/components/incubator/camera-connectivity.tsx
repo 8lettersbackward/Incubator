@@ -5,19 +5,29 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Video, VideoOff } from 'lucide-react';
 import { useIncubator } from '@/contexts/incubator-context';
+import { Switch } from '@/components/ui/switch';
+import { Label } from "@/components/ui/label";
 
 export default function CameraConnectivity() {
-  const { data } = useIncubator();
+  const { data, toggleCamera, isLocked } = useIncubator();
   const cameraImage = PlaceHolderImages.find(img => img.id === 'camera-feed');
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-            <Video className="w-6 h-6 text-primary" />
-            Hatching Chamber
-        </CardTitle>
-        <CardDescription>{data.control.cameraOn ? "Live feed from inside the hatching chamber" : "Camera is currently turned off"}</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+                <Video className="w-6 h-6 text-primary" />
+                Hatching Chamber
+            </CardTitle>
+            <CardDescription>{data.control.cameraOn ? "Live feed from inside the hatching chamber" : "Camera is currently turned off"}</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="camera-toggle" className="text-sm font-medium">Camera</Label>
+            <Switch id="camera-toggle" checked={data.control.cameraOn} onCheckedChange={toggleCamera} disabled={isLocked} />
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {data.control.cameraOn && cameraImage ? (
