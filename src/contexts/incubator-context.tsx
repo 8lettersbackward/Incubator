@@ -233,7 +233,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       const alertSystemRef = ref(database, `incubators/${user.uid}/alertSystem`);
       set(alertSystemRef, newAlert);
     }
-  }, [data.sensors, data.control, data.alertSystem, user, toast]);
+  }, [data.sensors, data.control, user, toast]);
 
   const getDbPath = useCallback((path: string) => {
     if (!user) return null;
