@@ -29,12 +29,12 @@ export default function IncubatorVisualization() {
     <Card className="h-full">
       <CardContent className="p-4 md:p-6 h-full flex flex-col">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
-            <div className="flex items-end gap-2 sm:gap-4">
+            <div className="flex items-baseline gap-4">
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary tracking-tighter">
                     {sensors.temperature.toFixed(1)}°C
                 </h2>
-                <p className="text-xl sm:text-2xl md:text-3xl font-medium text-accent tracking-tighter mb-0.5 sm:mb-1">
-                    {sensors.humidity}% RH
+                <p className="text-xl sm:text-2xl md:text-3xl font-medium text-accent tracking-tighter">
+                    {sensors.humidity}%
                 </p>
             </div>
             <div className="flex flex-wrap justify-center sm:justify-end gap-x-4 gap-y-2 text-xs">
