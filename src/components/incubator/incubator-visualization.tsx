@@ -33,7 +33,7 @@ export default function IncubatorVisualization() {
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary tracking-tighter">
                     {sensors.temperature.toFixed(1)}°C
                 </h2>
-                <p className="text-xl sm:text-2xl md:text-3xl font-medium text-accent tracking-tighter">
+                <p className="text-xl sm:text-2xl md:text-3xl font-medium text-blue-400 tracking-tighter">
                     {sensors.humidity}%
                 </p>
             </div>
