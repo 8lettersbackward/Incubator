@@ -56,7 +56,6 @@ interface IncubatorContextType {
   toggleHeater: () => void;
   toggleMotor: () => void;
   toggleCamera: (checked: boolean) => void;
-  refillWater: () => void;
   setEggType: (eggType: string) => void;
   unlock: (pin: string) => Promise<boolean>;
   lock: () => void;
@@ -173,11 +172,9 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     const { targetTemperature, targetHumidity } = data.control;
     const { alertSystem: currentAlert } = data;
 
-    // Define thresholds for deviation from target
-    const TEMP_WARNING_DEVIATION = 5;
-    const TEMP_CRITICAL_DEVIATION = 7.0;
-    const HUMIDITY_WARNING_DEVIATION = 10;
-    const HUMIDITY_CRITICAL_DEVIATION = 20;
+    // Define thresholds for deviation from target as per user request
+    const TEMP_ALERT_DEVIATION = 5.0;
+    const HUMIDITY_ALERT_DEVIATION = 20;
     
     const newAlert: AlertSystem = {
       status: 'SYSTEM_OK',
@@ -189,21 +186,15 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
 
     // Check Temperature Deviation
     const tempDiff = temperature - targetTemperature;
-    if (Math.abs(tempDiff) > TEMP_CRITICAL_DEVIATION) {
+    if (Math.abs(tempDiff) > TEMP_ALERT_DEVIATION) {
       newAlert.status = 'CRITICAL';
-      newAlert.temperatureState = tempDiff > 0 ? 'HIGH' : 'LOW';
-    } else if (Math.abs(tempDiff) > TEMP_WARNING_DEVIATION) {
-      newAlert.status = 'WARNING';
       newAlert.temperatureState = tempDiff > 0 ? 'HIGH' : 'LOW';
     }
 
     // Check Humidity Deviation
     const humidityDiff = humidity - targetHumidity;
-    if (Math.abs(humidityDiff) > HUMIDITY_CRITICAL_DEVIATION) {
+    if (Math.abs(humidityDiff) > HUMIDITY_ALERT_DEVIATION) {
       newAlert.status = 'CRITICAL';
-      newAlert.humidityState = humidityDiff > 0 ? 'HIGH' : 'LOW';
-    } else if (Math.abs(humidityDiff) > HUMIDITY_WARNING_DEVIATION) {
-      if (newAlert.status !== 'CRITICAL') newAlert.status = 'WARNING';
       newAlert.humidityState = humidityDiff > 0 ? 'HIGH' : 'LOW';
     }
 
@@ -213,11 +204,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       const tempMsg = newAlert.temperatureState !== 'NORMAL' ? `Temp is ${newAlert.temperatureState.toLowerCase()}` : '';
       const humMsg = newAlert.humidityState !== 'NORMAL' ? `Humidity is ${newAlert.humidityState.toLowerCase()}` : '';
       newAlert.message = `CRITICAL: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}. Deviation from target.`;
-    } else if (newAlert.status === 'WARNING') {
-      newAlert.buzzer = false;
-      const tempMsg = newAlert.temperatureState !== 'NORMAL' ? `Temp is ${newAlert.temperatureState.toLowerCase()}` : '';
-      const humMsg = newAlert.humidityState !== 'NORMAL' ? `Humidity is ${newAlert.humidityState.toLowerCase()}` : '';
-      newAlert.message = `Warning: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}. Conditions deviating from target.`;
     }
 
     // Only update if the alert state has actually changed to prevent loops
@@ -225,11 +211,11 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       const previousStatus = currentAlert.status;
       const newStatus = newAlert.status;
 
-      // Send a toast notification when a new warning/critical state is entered
-      if (newStatus !== previousStatus && (newStatus === 'WARNING' || newStatus === 'CRITICAL')) {
+      // Send a toast notification when a new critical state is entered
+      if (newStatus !== previousStatus && newStatus === 'CRITICAL') {
         toast({
-            variant: newStatus === 'CRITICAL' ? 'destructive' : 'default',
-            title: newStatus === 'CRITICAL' ? 'Critical Alert' : 'System Warning',
+            variant: 'destructive',
+            title: 'Critical Alert',
             description: newAlert.message,
             duration: 12000,
         });
@@ -238,7 +224,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       const alertSystemRef = ref(database, `incubators/${user.uid}/alertSystem`);
       set(alertSystemRef, newAlert);
     }
-  }, [data.sensors.temperature, data.sensors.humidity, data.control.targetTemperature, data.control.targetHumidity, user, toast]);
+  }, [data.sensors.temperature, data.sensors.humidity, data.control.targetTemperature, data.control.targetHumidity, data.alertSystem, user, toast]);
 
   const getDbPath = useCallback((path: string) => {
     if (!user) return null;
@@ -314,12 +300,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const setSensorTemperature = useCallback((temp: number) => setValue('sensors/temperature', temp), [setValue]);
   const setSensorHumidity = useCallback((humidity: number) => setValue('sensors/humidity', humidity), [setValue]);
 
-  const refillWater = useCallback(() => {
-    if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to refill water." }); return; }
-    if (data.sensors.waterPercent >= 95) { toast({ title: "Reservoir Full", description: "Water level is already near maximum." }); return; }
-    updateValues({ 'sensors/waterLevel': "HIGH", 'sensors/waterPercent': 100 });
-    toast({ title: "Water Refilled", description: "The water reservoir has been set to 100%." });
-  }, [isLocked, toast, data.sensors.waterPercent, updateValues]);
   
   const setEggType = useCallback((eggType: string) => {
     if (isLocked) { toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to change egg type." }); return; }
@@ -407,7 +387,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     set(dbRef, pin);
   }, [getDbPath]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, refillWater, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, toggleIncubation, setNumberOfEggs };
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, toggleIncubation, setNumberOfEggs };
 
   return (
     <IncubatorContext.Provider value={value}>
