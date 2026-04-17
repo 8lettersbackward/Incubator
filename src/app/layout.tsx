@@ -10,6 +10,13 @@ export const metadata: Metadata = {
   title: "Eggcelent",
   description: "Smart Egg Incubator IoT Dashboard",
   themeColor: "#2e7d32",
+  manifest: "/manifest.json",
+  applicationName: "Eggcelent",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Eggcelent",
+  },
 };
 
 export default function RootLayout({
@@ -21,7 +28,6 @@ export default function RootLayout({
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#2e7d32" />
-        <link rel="manifest" href="/manifest.ts" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
