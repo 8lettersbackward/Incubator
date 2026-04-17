@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
@@ -184,15 +183,20 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   useEffect(() => {
+    // This effect handles automatic system responses to environmental changes,
+    // including alerts and temperature regulation. It should not be blocked by the UI lock.
     if (!database || !user || !data.sensors || !data.control) return;
-
+  
     const { temperature, humidity } = data.sensors;
-    const { targetTemperature, targetHumidity } = data.control;
+    const { heater, fan, targetTemperature, targetHumidity } = data.control;
     const currentAlert = data.alertSystem;
-
+  
+    const updates: { [key: string]: any } = {};
+  
+    // --- Alert Logic ---
     const TEMP_ALERT_DEVIATION = 5.0;
     const HUMIDITY_ALERT_DEVIATION = 20;
-
+  
     const newAlert: AlertSystem = {
       status: 'SYSTEM_OK',
       temperatureState: 'NORMAL',
@@ -200,40 +204,35 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       buzzer: false,
       message: 'System stable. Optimal conditions.',
     };
-
+  
     let messages: string[] = [];
     let isCritical = false;
-
-    // Check Temperature Deviation
+  
     const tempDiff = temperature - targetTemperature;
     if (Math.abs(tempDiff) > TEMP_ALERT_DEVIATION) {
       isCritical = true;
       newAlert.temperatureState = tempDiff > 0 ? 'HIGH' : 'LOW';
       messages.push(`Temp is ${newAlert.temperatureState.toLowerCase()}`);
     }
-
-    // Check Humidity Deviation
+  
     const humidityDiff = humidity - targetHumidity;
     if (Math.abs(humidityDiff) > HUMIDITY_ALERT_DEVIATION) {
       isCritical = true;
       newAlert.humidityState = humidityDiff > 0 ? 'HIGH' : 'LOW';
       messages.push(`Humidity is ${newAlert.humidityState.toLowerCase()}`);
     }
-
-    // Construct message based on state
+    
     if (isCritical) {
       newAlert.status = 'CRITICAL';
       newAlert.buzzer = true;
       newAlert.message = `CRITICAL: ${messages.join(' & ')}.`;
     }
-
-    // Only update if the alert state has actually changed to prevent loops
+  
+    // Check if alert state needs updating
     if (JSON.stringify(newAlert) !== JSON.stringify(currentAlert)) {
-      const previousStatus = currentAlert?.status;
-      const newStatus = newAlert.status;
-
-      // Send a toast notification when a new critical state is entered
-      if (newStatus === 'CRITICAL' && previousStatus !== 'CRITICAL') {
+      updates['alertSystem'] = newAlert;
+      // Send a toast notification only when a new critical state is entered
+      if (newAlert.status === 'CRITICAL' && currentAlert.status !== 'CRITICAL') {
         toast({
             variant: 'destructive',
             title: 'Critical Alert',
@@ -241,11 +240,54 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
             duration: 12000,
         });
       }
-      
-      const alertSystemRef = ref(database, `incubators/${user.uid}/alertSystem`);
-      set(alertSystemRef, newAlert);
     }
-  }, [data.sensors.temperature, data.sensors.humidity, data.control.targetTemperature, data.control.targetHumidity, user, toast, data.alertSystem]);
+  
+    // --- Automated Temperature Control Logic ---
+    // This creates a 1-degree "dead zone" around the target to prevent rapid switching.
+    const TEMP_UPPER_BOUND = targetTemperature + 0.5;
+    const TEMP_LOWER_BOUND = targetTemperature - 0.5;
+    
+    let newHeaterState = heater;
+    let newFanState = fan;
+
+    if (temperature < TEMP_LOWER_BOUND) {
+      // Temperature is too low, turn heater on.
+      newHeaterState = true;
+      newFanState = false;
+    } else if (temperature > TEMP_UPPER_BOUND) {
+      // Temperature is too high, turn fan on to cool.
+      newFanState = true;
+      newHeaterState = false;
+    } else {
+      // Temperature is in the ideal range, turn both off.
+      newHeaterState = false;
+      newFanState = false;
+    }
+  
+    // Check if control states need updating
+    if (newHeaterState !== heater) {
+      updates['control/heater'] = newHeaterState;
+    }
+    if (newFanState !== fan) {
+      updates['control/fan'] = newFanState;
+    }
+  
+    // If there are any changes, send a single update to Firebase.
+    if (Object.keys(updates).length > 0) {
+      const incubatorRef = ref(database, `incubators/${user.uid}`);
+      update(incubatorRef, updates);
+    }
+  }, [
+      user, 
+      toast,
+      data.sensors.temperature, 
+      data.sensors.humidity, 
+      data.control.targetTemperature, 
+      data.control.targetHumidity, 
+      data.alertSystem,
+      data.control.heater,
+      data.control.fan,
+    ]);
 
   const getDbPath = useCallback((path: string) => {
     if (!user) return null;
@@ -285,11 +327,10 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
-    if (checked) { // Toggling ON - take a snapshot
+    if (checked) {
       const updates: any = {};
       const newSnapshotUrl = `https://picsum.photos/seed/${Date.now()}/600/400`;
 
-      // Archive the current image if it exists
       if (data.incubation.liveFeedUrl) {
         const newLogEntry = {
           id: Date.now(),
@@ -297,7 +338,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
           image: data.incubation.liveFeedUrl,
           event: "Snapshot Archived",
         };
-        // Prepend to the log, safely handling object or array from Firebase
         const currentLog = data.incubation.cameraLog || [];
         const logAsArray = Array.isArray(currentLog) ? currentLog : Object.values(currentLog);
         const newCameraLog = [newLogEntry, ...logAsArray];
@@ -313,7 +353,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
         description: "A new image has been taken.",
       });
 
-    } else { // Toggling OFF
+    } else {
       setValue('control/cameraOn', false);
     }
   }, [isLocked, toast, data.incubation.liveFeedUrl, data.incubation.cameraLog, updateValues, setValue]);
