@@ -69,6 +69,8 @@ interface IncubatorContextType {
   resetIncubation: () => void;
   toggleIncubation: () => void;
   setNumberOfEggs: (count: number) => void;
+  deleteCameraLogEntry: (logId: number) => void;
+  clearCameraLog: () => void;
 }
 
 export const EGG_INCUBATION_PERIODS: { [key: string]: number } = {
@@ -168,7 +170,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!database || !user || !data.sensors || !data.control) return;
 
-    const { temperature, humidity } = data.sensors;
+    const { temperature, humidity, waterPercent } = data.sensors;
     const { targetTemperature, targetHumidity } = data.control;
     const currentAlert = data.alertSystem;
 
@@ -184,11 +186,12 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     };
 
     let messages: string[] = [];
+    let isCritical = false;
 
     // Check Temperature Deviation
     const tempDiff = temperature - targetTemperature;
     if (Math.abs(tempDiff) > TEMP_ALERT_DEVIATION) {
-      newAlert.status = 'CRITICAL';
+      isCritical = true;
       newAlert.temperatureState = tempDiff > 0 ? 'HIGH' : 'LOW';
       messages.push(`Temp is ${newAlert.temperatureState.toLowerCase()}`);
     }
@@ -196,15 +199,14 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     // Check Humidity Deviation
     const humidityDiff = humidity - targetHumidity;
     if (Math.abs(humidityDiff) > HUMIDITY_ALERT_DEVIATION) {
-      if (newAlert.status !== 'CRITICAL') {
-        newAlert.status = 'CRITICAL';
-      }
+      isCritical = true;
       newAlert.humidityState = humidityDiff > 0 ? 'HIGH' : 'LOW';
       messages.push(`Humidity is ${newAlert.humidityState.toLowerCase()}`);
     }
 
     // Construct message based on state
-    if (newAlert.status === 'CRITICAL') {
+    if (isCritical) {
+      newAlert.status = 'CRITICAL';
       newAlert.buzzer = true;
       newAlert.message = `CRITICAL: ${messages.join(' & ')}.`;
     }
@@ -227,7 +229,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       const alertSystemRef = ref(database, `incubators/${user.uid}/alertSystem`);
       set(alertSystemRef, newAlert);
     }
-  }, [data.sensors.temperature, data.sensors.humidity, data.control.targetTemperature, data.control.targetHumidity, user, toast, data.alertSystem]);
+  }, [data.sensors.temperature, data.sensors.humidity, data.sensors.waterPercent, data.control.targetTemperature, data.control.targetHumidity, user, toast, data.alertSystem]);
 
   const getDbPath = useCallback((path: string) => {
     if (!user) return null;
@@ -279,9 +281,9 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
           image: data.incubation.liveFeedUrl,
           event: "Snapshot Archived",
         };
-        // Prepend to the log
-        const currentLog = data.incubation.cameraLog;
-        const logAsArray = currentLog ? (Array.isArray(currentLog) ? currentLog : Object.values(currentLog)) : [];
+        // Prepend to the log, safely handling object or array
+        const currentLog = data.incubation.cameraLog || [];
+        const logAsArray = Array.isArray(currentLog) ? currentLog : Object.values(currentLog);
         const newCameraLog = [newLogEntry, ...logAsArray];
         updates['incubation/cameraLog'] = newCameraLog;
       }
@@ -392,7 +394,37 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     set(dbRef, pin);
   }, [getDbPath]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, toggleIncubation, setNumberOfEggs };
+  const deleteCameraLogEntry = useCallback((logId: number) => {
+      const fullPath = getDbPath('incubation/cameraLog');
+      if (!database || !fullPath) return;
+      
+      const currentLog = data.incubation.cameraLog || [];
+      const logAsArray = Array.isArray(currentLog) ? currentLog : Object.values(currentLog);
+      const newCameraLog = logAsArray.filter(entry => entry.id !== logId);
+
+      const dbRef = ref(database, fullPath);
+      set(dbRef, newCameraLog);
+
+      toast({
+          title: "Log Entry Deleted",
+          description: "The snapshot has been removed from your log."
+      });
+  }, [getDbPath, data.incubation.cameraLog, toast]);
+
+  const clearCameraLog = useCallback(() => {
+      const fullPath = getDbPath('incubation/cameraLog');
+      if (!database || !fullPath) return;
+
+      const dbRef = ref(database, fullPath);
+      set(dbRef, []);
+      
+      toast({
+          title: "Camera Log Cleared",
+          description: "All snapshots have been deleted."
+      });
+  }, [getDbPath, toast]);
+
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleCamera, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, toggleIncubation, setNumberOfEggs, deleteCameraLogEntry, clearCameraLog };
 
   return (
     <IncubatorContext.Provider value={value}>
