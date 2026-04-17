@@ -12,6 +12,7 @@ export interface AlertSystem {
   status: 'SYSTEM_OK' | 'WARNING' | 'CRITICAL';
   temperatureState: 'NORMAL' | 'HIGH' | 'LOW';
   humidityState: 'NORMAL' | 'HIGH' | 'LOW';
+  waterState: 'NORMAL' | 'LOW';
   buzzer: boolean;
   message: string;
 }
@@ -104,6 +105,7 @@ export const initialData: IncubatorData = {
     status: "SYSTEM_OK",
     temperatureState: "NORMAL",
     humidityState: "NORMAL",
+    waterState: "NORMAL",
     buzzer: false,
     message: "System stable. Optimal conditions.",
   },
@@ -168,42 +170,56 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!database || !user || !data.sensors || !data.control) return;
 
-    const { temperature, humidity } = data.sensors;
+    const { temperature, humidity, waterPercent } = data.sensors;
     const { targetTemperature, targetHumidity } = data.control;
     const currentAlert = data.alertSystem;
 
-    // Define thresholds for deviation from target as per user request
     const TEMP_ALERT_DEVIATION = 5.0;
     const HUMIDITY_ALERT_DEVIATION = 20;
-    
+    const WATER_LEVEL_CRITICAL_THRESHOLD = 20;
+
     const newAlert: AlertSystem = {
       status: 'SYSTEM_OK',
       temperatureState: 'NORMAL',
       humidityState: 'NORMAL',
+      waterState: 'NORMAL',
       buzzer: false,
       message: 'System stable. Optimal conditions.',
     };
+
+    let messages: string[] = [];
 
     // Check Temperature Deviation
     const tempDiff = temperature - targetTemperature;
     if (Math.abs(tempDiff) > TEMP_ALERT_DEVIATION) {
       newAlert.status = 'CRITICAL';
       newAlert.temperatureState = tempDiff > 0 ? 'HIGH' : 'LOW';
+      messages.push(`Temp is ${newAlert.temperatureState.toLowerCase()}`);
     }
 
     // Check Humidity Deviation
     const humidityDiff = humidity - targetHumidity;
     if (Math.abs(humidityDiff) > HUMIDITY_ALERT_DEVIATION) {
-      newAlert.status = 'CRITICAL';
+      if (newAlert.status !== 'CRITICAL') {
+        newAlert.status = 'CRITICAL';
+      }
       newAlert.humidityState = humidityDiff > 0 ? 'HIGH' : 'LOW';
+      messages.push(`Humidity is ${newAlert.humidityState.toLowerCase()}`);
+    }
+    
+    // Check Water Level
+    if (waterPercent < WATER_LEVEL_CRITICAL_THRESHOLD) {
+      if (newAlert.status !== 'CRITICAL') {
+        newAlert.status = 'CRITICAL';
+      }
+      newAlert.waterState = 'LOW';
+      messages.push('Water level is low');
     }
 
     // Construct message based on state
     if (newAlert.status === 'CRITICAL') {
       newAlert.buzzer = true;
-      const tempMsg = newAlert.temperatureState !== 'NORMAL' ? `Temp is ${newAlert.temperatureState.toLowerCase()}` : '';
-      const humMsg = newAlert.humidityState !== 'NORMAL' ? `Humidity is ${newAlert.humidityState.toLowerCase()}` : '';
-      newAlert.message = `CRITICAL: ${[tempMsg, humMsg].filter(Boolean).join(' & ')}. Deviation from target.`;
+      newAlert.message = `CRITICAL: ${messages.join(' & ')}.`;
     }
 
     // Only update if the alert state has actually changed to prevent loops
@@ -212,7 +228,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       const newStatus = newAlert.status;
 
       // Send a toast notification when a new critical state is entered
-      if (newStatus !== previousStatus && newStatus === 'CRITICAL') {
+      if (newStatus === 'CRITICAL' && previousStatus !== 'CRITICAL') {
         toast({
             variant: 'destructive',
             title: 'Critical Alert',
@@ -224,7 +240,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       const alertSystemRef = ref(database, `incubators/${user.uid}/alertSystem`);
       set(alertSystemRef, newAlert);
     }
-  }, [data.sensors.temperature, data.sensors.humidity, data.control.targetTemperature, data.control.targetHumidity, user, toast, data.alertSystem]);
+  }, [data.sensors.temperature, data.sensors.humidity, data.sensors.waterPercent, data.control.targetTemperature, data.control.targetHumidity, user, toast, data.alertSystem]);
 
   const getDbPath = useCallback((path: string) => {
     if (!user) return null;
