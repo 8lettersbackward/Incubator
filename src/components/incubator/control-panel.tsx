@@ -123,7 +123,7 @@ export default function ControlPanel() {
            <div className="flex items-center justify-between">
             <Label className="flex items-center gap-2 font-medium">
               <Bot className="w-5 h-5 text-primary" />
-              Climate Mode
+              Control Mode
             </Label>
             <Button
               onClick={() => setAutonomousClimate(!control.autonomousClimate)}
