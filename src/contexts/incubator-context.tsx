@@ -307,34 +307,15 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const toggleMotor = useCallback(() => setValue('control/motor', !data.control.motor), [setValue, data.control.motor]);
   
   const toggleCamera = useCallback((checked: boolean) => {
+    // This function will *only* toggle the boolean `cameraOn` state.
+    // It is now the responsibility of the IoT device to listen to this change,
+    // take a photo, upload it, and update the `liveFeedUrl`.
     if (isLocked) {
-      toast({ variant: "destructive", title: "System Locked", description: "Unlock to use the camera." });
+      toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to toggle the camera." });
       return;
     }
-    
-    if (checked) {
-      const updates: any = {};
-      const baseUrl = "https://opmkolckeetjuhliytnm.supabase.co/storage/v1/object/public/Eggcelent/latest.jpg";
-      const newSnapshotUrl = `${baseUrl}?t=${Date.now()}`;
-
-      if (data.incubation.liveFeedUrl) {
-        const newLogEntry = { id: Date.now(), timestamp: new Date().toISOString(), image: data.incubation.liveFeedUrl, event: "Snapshot Archived"};
-        const currentLog = data.incubation.cameraLog || [];
-        const logAsArray = Array.isArray(currentLog) ? currentLog : Object.values(currentLog);
-        const newCameraLog = [newLogEntry, ...logAsArray];
-        updates['incubation/cameraLog'] = newCameraLog;
-      }
-      
-      updates['incubation/liveFeedUrl'] = newSnapshotUrl;
-      updates['control/cameraOn'] = true;
-      
-      updateValues(updates);
-      toast({ title: "Snapshot Refreshed", description: "Displaying the latest image." });
-
-    } else {
-      setValue('control/cameraOn', false);
-    }
-  }, [isLocked, toast, data.incubation.liveFeedUrl, data.incubation.cameraLog, updateValues, setValue]);
+    setValue('control/cameraOn', checked);
+  }, [isLocked, toast, setValue]);
 
   const setTargetTemperature = useCallback((temp: number) => setValue('control/targetTemperature', temp), [setValue]);
   const setTargetHumidity = useCallback((humidity: number) => setValue('control/targetHumidity', humidity), [setValue]);
