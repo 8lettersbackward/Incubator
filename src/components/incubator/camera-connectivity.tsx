@@ -13,32 +13,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function CameraConnectivity() {
   const { data, toggleCamera, isLocked } = useIncubator();
-  
-  // The liveFeedUrl is the single source of truth from Firebase, updated by the ESP32.
-  const liveImageUrl = data.incubation?.liveFeedUrl || '';
-  
-  // This state holds a timestamp to force the image to refresh, combating browser caching.
+  const baseUrl = "https://opmkolckeetjuhliytnm.supabase.co/storage/v1/object/public/Eggcelent/latest.jpg";
   const [refreshKey, setRefreshKey] = useState(Date.now());
 
-  // This effect listens for changes to the liveImageUrl from Firebase.
-  // When it changes, we generate a new key to force the <Image> component to re-fetch.
-  useEffect(() => {
-    if (liveImageUrl) {
+  const handleToggle = (checked: boolean) => {
+    // This updates the 'cameraOn' boolean in Firebase to signal the device.
+    toggleCamera(checked);
+    if (checked) {
+      // If we are turning the camera ON, we want to see the latest image,
+      // so we update the key to break the browser's cache.
       setRefreshKey(Date.now());
     }
-  }, [liveImageUrl]);
-
-  const handleToggle = (checked: boolean) => {
-    // This just updates the 'cameraOn' boolean in Firebase to signal the device.
-    toggleCamera(checked);
   };
   
   // The final URL includes the cache-busting query parameter.
-  const displayUrl = liveImageUrl ? `${liveImageUrl}?t=${refreshKey}` : '';
+  const displayUrl = `${baseUrl}?t=${refreshKey}`;
 
   return (
     <Card>
@@ -67,7 +60,7 @@ export default function CameraConnectivity() {
                   alt="Latest snapshot from hatching chamber"
                   width={600}
                   height={400}
-                  unoptimized // Bypasses Next.js image optimization, good for frequently changing images
+                  unoptimized // Good for frequently changing images, bypasses Next.js optimization & caching
                   className="aspect-video object-cover"
                 />
               </div>
