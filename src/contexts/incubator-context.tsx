@@ -186,36 +186,39 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!database || !user || !data.sensors || !data.control) return;
-  
-    const { temperature, humidity } = data.sensors;
-    const { mist, targetTemperature, targetHumidity, heater, fan, autonomousClimate } = data.control;
-    const currentAlert = data.alertSystem;
-  
+
     const updates: { [key: string]: any } = {};
-  
+    const { temperature, humidity } = data.sensors;
+    const { targetTemperature, targetHumidity, autonomousClimate } = data.control;
+    const currentAlert = data.alertSystem;
+
     // --- Alert Logic ---
     const TEMP_ALERT_DEVIATION = 5.0;
     const HUMIDITY_ALERT_DEVIATION = 20;
     const newAlert: AlertSystem = { status: 'SYSTEM_OK', temperatureState: 'NORMAL', humidityState: 'NORMAL', buzzer: false, message: 'System stable. Optimal conditions.'};
     let messages: string[] = [];
     let isCritical = false;
+
     const tempDiff = temperature - targetTemperature;
     if (Math.abs(tempDiff) > TEMP_ALERT_DEVIATION) {
       isCritical = true;
       newAlert.temperatureState = tempDiff > 0 ? 'HIGH' : 'LOW';
       messages.push(`Temp is ${newAlert.temperatureState.toLowerCase()}`);
     }
+
     const humidityDiff = humidity - targetHumidity;
     if (Math.abs(humidityDiff) > HUMIDITY_ALERT_DEVIATION) {
       isCritical = true;
       newAlert.humidityState = humidityDiff > 0 ? 'HIGH' : 'LOW';
       messages.push(`Humidity is ${newAlert.humidityState.toLowerCase()}`);
     }
+
     if (isCritical) {
       newAlert.status = 'CRITICAL';
       newAlert.buzzer = true;
       newAlert.message = `CRITICAL: ${messages.join(' & ')}.`;
     }
+
     if (JSON.stringify(newAlert) !== JSON.stringify(currentAlert)) {
       updates['alertSystem'] = newAlert;
       if (newAlert.status === 'CRITICAL' && currentAlert.status !== 'CRITICAL') {
@@ -223,40 +226,35 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    // --- Automated Humidity Control Logic (Mist) ---
-    const HUMIDITY_LOWER_BOUND = targetHumidity - 5;
-    let newMistState = mist;
-    if (humidity < HUMIDITY_LOWER_BOUND) {
-      newMistState = true;
-    } else if (humidity >= targetHumidity) {
-      newMistState = false;
-    }
-    if (newMistState !== mist) {
-      updates['control/mist'] = newMistState;
-    }
-
-    // --- Autonomous Temperature Control ---
+    // --- Autonomous Climate Control ---
     if (autonomousClimate) {
-      let newHeaterState = heater;
-      if (temperature < targetTemperature) {
-        newHeaterState = true;
-      } else {
-        newHeaterState = false;
-      }
+        const { heater, fan, mist } = data.control;
+        let newHeaterState = heater;
+        let newFanState = fan;
+        let newMistState = mist;
 
-      let newFanState = fan;
-      if (temperature > targetTemperature + 5) {
-        newFanState = true;
-      } else {
-        newFanState = false;
-      }
+        // Temperature Control
+        if (temperature < targetTemperature) {
+            newHeaterState = true; // Turn on heater if below target
+            newFanState = false;   // Ensure fan is off
+        } else if (temperature > targetTemperature + 5) {
+            newFanState = true;    // Turn on fan if 5C+ above target
+            newHeaterState = false;// Ensure heater is off
+        } else {
+            newHeaterState = false; // Turn off heater when target is reached
+            newFanState = false;    // Turn off fan when temp is acceptable
+        }
 
-      if (newHeaterState !== heater) {
-        updates['control/heater'] = newHeaterState;
-      }
-      if (newFanState !== fan) {
-        updates['control/fan'] = newFanState;
-      }
+        // Humidity Control
+        if (humidity < targetHumidity - 5) {
+            newMistState = true;    // Turn on mist if 5% below target
+        } else if (humidity >= targetHumidity) {
+            newMistState = false;   // Turn off mist when target is reached
+        }
+
+        if (newHeaterState !== heater) updates['control/heater'] = newHeaterState;
+        if (newFanState !== fan) updates['control/fan'] = newFanState;
+        if (newMistState !== mist) updates['control/mist'] = newMistState;
     }
 
     if (Object.keys(updates).length > 0) {
@@ -293,24 +291,19 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     update(dbRef, updates);
   }, [isLocked, toast, getDbPath]);
 
-  const toggleHeater = useCallback(() => {
-    if (isLocked) { toast({ variant: "destructive", title: "System Locked" }); return; }
-    updateValues({
-        'control/autonomousClimate': false,
-        'control/heater': !data.control.heater,
-    });
-  }, [isLocked, toast, updateValues, data.control.heater]);
-
-  const toggleFan = useCallback(() => {
+  const manualOverride = (updates: object) => {
       if (isLocked) { toast({ variant: "destructive", title: "System Locked" }); return; }
       updateValues({
           'control/autonomousClimate': false,
-          'control/fan': !data.control.fan,
+          ...updates,
       });
-  }, [isLocked, toast, updateValues, data.control.fan]);
+  }
+
+  const toggleHeater = useCallback(() => manualOverride({'control/heater': !data.control.heater}), [data.control.heater, manualOverride]);
+  const toggleFan = useCallback(() => manualOverride({'control/fan': !data.control.fan}), [data.control.fan, manualOverride]);
+  const toggleMist = useCallback(() => manualOverride({'control/mist': !data.control.mist}), [data.control.mist, manualOverride]);
 
   const toggleMotor = useCallback(() => setValue('control/motor', !data.control.motor), [setValue, data.control.motor]);
-  const toggleMist = useCallback(() => setValue('control/mist', !data.control.mist), [setValue, data.control.mist]);
   
   const toggleCamera = useCallback((checked: boolean) => {
     if (isLocked) {

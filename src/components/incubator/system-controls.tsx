@@ -31,6 +31,7 @@ export default function SystemControls() {
             description: isClimateAuto ? "Automatically controlled" : "Heating element status",
             checked: data.control.heater,
             onCheckedChange: toggleHeater,
+            disabled: isLocked || isClimateAuto
         },
         {
             icon: <Fan className={cn("w-6 h-6 text-primary", data.control.fan && "animate-spin")} />,
@@ -38,6 +39,15 @@ export default function SystemControls() {
             description: isClimateAuto ? "Automatically controlled" : "Air circulation system",
             checked: data.control.fan,
             onCheckedChange: toggleFan,
+            disabled: isLocked || isClimateAuto
+        },
+        {
+            icon: <CloudDrizzle className="w-6 h-6 text-primary" />,
+            label: "Mist Generator",
+            description: isClimateAuto ? "Automatically controlled" : "Humidity misting system",
+            checked: data.control.mist,
+            onCheckedChange: toggleMist,
+            disabled: isLocked || isClimateAuto
         },
         {
             icon: <RotateCw className="w-6 h-6 text-primary" />,
@@ -45,13 +55,7 @@ export default function SystemControls() {
             description: "Automatic egg rotation",
             checked: data.control.motor,
             onCheckedChange: toggleMotor,
-        },
-        {
-            icon: <CloudDrizzle className="w-6 h-6 text-primary" />,
-            label: "Mist Generator",
-            description: "Humidity misting system",
-            checked: data.control.mist,
-            onCheckedChange: toggleMist,
+            disabled: isLocked
         },
     ];
 
@@ -77,7 +81,7 @@ export default function SystemControls() {
                             description={control.description}
                             checked={control.checked}
                             onCheckedChange={control.onCheckedChange}
-                            disabled={isLocked}
+                            disabled={control.disabled}
                         />
                     ))}
                 </CardContent>
