@@ -48,11 +48,16 @@ export default function CameraConnectivity() {
               <Video className="w-6 h-6 text-primary" />
               Hatching Chamber
           </CardTitle>
-          <CardDescription>{data.control.cameraOn ? "Latest snapshot from the hatching chamber. Click image to zoom." : "Camera is currently turned off"}</CardDescription>
+          <CardDescription>
+            {data.control.cameraOn 
+              ? "Live feed from the hatching chamber. Click image to zoom." 
+              : "Camera is currently off. Showing last available snapshot."
+            }
+          </CardDescription>
         </div>
       </CardHeader>
       <CardContent>
-        {data.control.cameraOn && displayUrl ? (
+        {displayUrl ? (
           <Dialog>
             <DialogTrigger asChild>
               <div className="relative rounded-lg overflow-hidden border border-border cursor-pointer transition-transform hover:scale-[1.02]">
@@ -84,7 +89,7 @@ export default function CameraConnectivity() {
         ) : (
            <div className="relative rounded-lg border-2 border-dashed border-border aspect-video flex flex-col items-center justify-center bg-card/50">
               <VideoOff className="w-12 h-12 text-muted-foreground" />
-              <p className="mt-2 text-sm text-muted-foreground">{data.control.cameraOn ? 'Waiting for image...' : 'Camera is offline'}</p>
+              <p className="mt-2 text-sm text-muted-foreground">No image available from camera</p>
           </div>
         )}
       </CardContent>
