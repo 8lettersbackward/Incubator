@@ -85,8 +85,6 @@ interface IncubatorContextType {
   resetIncubation: () => void;
   toggleIncubation: () => void;
   setNumberOfEggs: (count: number) => void;
-  deleteCameraLogEntry: (logId: number) => void;
-  clearCameraLog: () => void;
   deleteHistoryEntry: (historyId: number) => void;
   setAutonomousClimate: (status: boolean) => void;
 }
@@ -453,25 +451,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     set(dbRef, pin);
   }, [getDbPath]);
 
-  const deleteCameraLogEntry = useCallback((logId: number) => {
-      const fullPath = getDbPath('incubation/cameraLog');
-      if (!database || !fullPath) return;
-      const currentLog = data.incubation.cameraLog || [];
-      const logAsArray = Array.isArray(currentLog) ? currentLog : Object.values(currentLog);
-      const newCameraLog = logAsArray.filter(entry => entry.id !== logId);
-      const dbRef = ref(database, fullPath);
-      set(dbRef, newCameraLog);
-      toast({ title: "Log Entry Deleted", description: "The snapshot has been removed from your log."});
-  }, [getDbPath, data.incubation.cameraLog, toast]);
-
-  const clearCameraLog = useCallback(() => {
-      const fullPath = getDbPath('incubation/cameraLog');
-      if (!database || !fullPath) return;
-      const dbRef = ref(database, fullPath);
-      set(dbRef, []);
-      toast({ title: "Camera Log Cleared", description: "All snapshots have been deleted." });
-  }, [getDbPath, toast]);
-
   const deleteHistoryEntry = useCallback((historyId: number) => {
     const fullPath = getDbPath('incubation/incubationHistory');
     if (!database || !fullPath) return;
@@ -503,7 +482,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     set(dbRef, status);
   }, [isLocked, toast, getDbPath]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleMist, toggleCamera, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, toggleIncubation, setNumberOfEggs, deleteCameraLogEntry, clearCameraLog, deleteHistoryEntry, setAutonomousClimate };
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleMist, toggleCamera, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, toggleIncubation, setNumberOfEggs, deleteHistoryEntry, setAutonomousClimate };
 
   return (
     <IncubatorContext.Provider value={value}>
