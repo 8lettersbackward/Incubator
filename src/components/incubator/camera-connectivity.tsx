@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from 'next/image';
@@ -14,10 +13,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { useState } from 'react';
 
 export default function CameraConnectivity() {
   const { data, toggleCamera, isLocked } = useIncubator();
-  const liveImageUrl = data.incubation?.liveFeedUrl;
+  
+  // Use the URL from the database, but have a fallback to the known Supabase URL.
+  const liveImageUrl = data.incubation?.liveFeedUrl || 'https://opmkolckeetjuhliytnm.supabase.co/storage/v1/object/public/Eggcelent/latest.jpg';
+  
+  // This state holds a timestamp to force the image to refresh.
+  const [refreshKey, setRefreshKey] = useState(Date.now());
+
+  const handleToggle = (checked: boolean) => {
+    // When turning the camera on, create a new timestamp to bust the browser cache.
+    if (checked) {
+      setRefreshKey(Date.now());
+    }
+    // This just updates the 'cameraOn' boolean in Firebase.
+    toggleCamera(checked);
+  };
+  
+  // The final URL includes the cache-busting query parameter.
+  const displayUrl = `${liveImageUrl}?t=${refreshKey}`;
 
   return (
     <Card>
@@ -31,16 +48,17 @@ export default function CameraConnectivity() {
         </div>
       </CardHeader>
       <CardContent>
-        {data.control.cameraOn && liveImageUrl ? (
+        {data.control.cameraOn ? (
           <Dialog>
             <DialogTrigger asChild>
               <div className="relative rounded-lg overflow-hidden border border-border cursor-pointer transition-transform hover:scale-[1.02]">
                 <Image
-                  key={liveImageUrl}
-                  src={liveImageUrl}
+                  key={displayUrl} // The key ensures React replaces the component when the URL changes
+                  src={displayUrl}
                   alt="Latest snapshot from hatching chamber"
                   width={600}
                   height={400}
+                  unoptimized // Bypasses Next.js image optimization, good for frequently changing images
                   className="aspect-video object-cover"
                 />
               </div>
@@ -50,10 +68,11 @@ export default function CameraConnectivity() {
                 <DialogTitle>Latest snapshot from hatching chamber</DialogTitle>
               </DialogHeader>
               <Image
-                src={liveImageUrl}
+                src={displayUrl}
                 alt="Latest snapshot from hatching chamber"
                 width={1200}
                 height={800}
+                unoptimized
                 className="w-full h-auto object-contain rounded-lg"
               />
             </DialogContent>
@@ -68,7 +87,7 @@ export default function CameraConnectivity() {
        <CardFooter className="flex items-center justify-center pt-6">
         <div className="flex items-center gap-2">
             <Label htmlFor="camera-toggle" className="text-sm font-medium">Camera</Label>
-            <Switch id="camera-toggle" checked={data.control.cameraOn} onCheckedChange={toggleCamera} disabled={isLocked} />
+            <Switch id="camera-toggle" checked={data.control.cameraOn} onCheckedChange={handleToggle} disabled={isLocked} />
         </div>
       </CardFooter>
     </Card>
