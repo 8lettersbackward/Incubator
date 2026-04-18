@@ -191,7 +191,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     if (!database || !user || !data.sensors || !data.control) return;
   
     const { temperature, humidity } = data.sensors;
-    const { heater, fan, mist, targetTemperature, targetHumidity } = data.control;
+    const { mist, targetTemperature, targetHumidity } = data.control;
     const currentAlert = data.alertSystem;
   
     const updates: { [key: string]: any } = {};
@@ -244,37 +244,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
         });
       }
     }
-  
-    // --- Automated Temperature Control Logic ---
-    // This creates a 1-degree "dead zone" around the target to prevent rapid switching.
-    const TEMP_UPPER_BOUND = targetTemperature + 0.5;
-    const TEMP_LOWER_BOUND = targetTemperature - 0.5;
-    
-    let newHeaterState = heater;
-    let newFanState = fan;
 
-    if (temperature < TEMP_LOWER_BOUND) {
-      // Temperature is too low, turn heater on.
-      newHeaterState = true;
-      newFanState = false;
-    } else if (temperature > TEMP_UPPER_BOUND) {
-      // Temperature is too high, turn fan on to cool.
-      newFanState = true;
-      newHeaterState = false;
-    } else {
-      // Temperature is in the ideal range, turn both off.
-      newHeaterState = false;
-      newFanState = false;
-    }
-  
-    // Check if control states need updating
-    if (newHeaterState !== heater) {
-      updates['control/heater'] = newHeaterState;
-    }
-    if (newFanState !== fan) {
-      updates['control/fan'] = newFanState;
-    }
-  
     // --- Automated Humidity Control Logic (Mist) ---
     const HUMIDITY_LOWER_BOUND = targetHumidity - 5;
     let newMistState = mist;
@@ -305,8 +275,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       data.control.targetTemperature, 
       data.control.targetHumidity, 
       data.alertSystem,
-      data.control.heater,
-      data.control.fan,
       data.control.mist,
     ]);
 
