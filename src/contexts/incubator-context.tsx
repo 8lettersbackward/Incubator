@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { database } from '@/firebase/config';
 import { ref, onValue, set, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
@@ -149,6 +149,12 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState<IncubatorData>(initialData);
   const [isLocked, setIsLocked] = useState(true);
   const { toast } = useToast();
+  const previousLiveFeedUrl = useRef<string | undefined>();
+
+  const getDbPath = useCallback((path: string) => {
+    if (!user) return null;
+    return `incubators/${user.uid}/${path}`;
+  }, [user]);
 
   useEffect(() => {
     // On initial mount for a user, ensure the buzzer is reset to OFF.
@@ -178,12 +184,44 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
           incubation: { ...initialData.incubation, ...(remoteData.incubation || {}) },
         };
         setData(mergedData);
+        // Initialize the ref with the first data load
+        if (previousLiveFeedUrl.current === undefined) {
+          previousLiveFeedUrl.current = mergedData.incubation.liveFeedUrl;
+        }
       } else {
         setData(initialData);
       }
     });
     return () => unsubscribe();
   }, [user]);
+
+  // Effect to automatically archive the old live feed URL when a new one arrives.
+  useEffect(() => {
+    const newLiveFeedUrl = data.incubation.liveFeedUrl;
+    const oldLiveFeedUrl = previousLiveFeedUrl.current;
+
+    if (newLiveFeedUrl && newLiveFeedUrl !== oldLiveFeedUrl && oldLiveFeedUrl) {
+      const fullPath = getDbPath('incubation/cameraLog');
+      if (!database || !fullPath) return;
+
+      const currentLog = data.incubation.cameraLog || [];
+      const logAsArray = Array.isArray(currentLog) ? currentLog : Object.values(currentLog);
+
+      const newLogEntry = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        image: oldLiveFeedUrl, // Archive the OLD url
+        event: 'New Snapshot'
+      };
+
+      const newCameraLog = [newLogEntry, ...logAsArray];
+      const dbRef = ref(database, fullPath);
+      set(dbRef, newCameraLog);
+    }
+
+    // After processing, update the ref to the current URL for the next change detection.
+    previousLiveFeedUrl.current = newLiveFeedUrl;
+  }, [data.incubation.liveFeedUrl, getDbPath, user, database, data.incubation.cameraLog]);
 
   useEffect(() => {
     if (!database || !user || !data.sensors || !data.control) return;
@@ -264,10 +302,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [ user, toast, data.sensors, data.control, data.alertSystem ]);
 
-  const getDbPath = useCallback((path: string) => {
-    if (!user) return null;
-    return `incubators/${user.uid}/${path}`;
-  }, [user]);
 
   const setValue = useCallback((path: string, value: any) => {
     if (isLocked) {
@@ -307,9 +341,8 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const toggleMotor = useCallback(() => setValue('control/motor', !data.control.motor), [setValue, data.control.motor]);
   
   const toggleCamera = useCallback((checked: boolean) => {
-    // This function will *only* toggle the boolean `cameraOn` state.
-    // It is now the responsibility of the IoT device to listen to this change,
-    // take a photo, upload it, and update the `liveFeedUrl`.
+    // This function only signals the device to turn on or off.
+    // It does not directly manipulate URLs or logs.
     if (isLocked) {
       toast({ variant: "destructive", title: "System Locked", description: "Unlock the system to toggle the camera." });
       return;

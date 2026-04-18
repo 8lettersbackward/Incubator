@@ -13,28 +13,32 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function CameraConnectivity() {
   const { data, toggleCamera, isLocked } = useIncubator();
   
-  // Use the URL from the database, but have a fallback to the known Supabase URL.
-  const liveImageUrl = data.incubation?.liveFeedUrl || 'https://opmkolckeetjuhliytnm.supabase.co/storage/v1/object/public/Eggcelent/latest.jpg';
+  // The liveFeedUrl is the single source of truth from Firebase, updated by the ESP32.
+  const liveImageUrl = data.incubation?.liveFeedUrl || '';
   
-  // This state holds a timestamp to force the image to refresh.
+  // This state holds a timestamp to force the image to refresh, combating browser caching.
   const [refreshKey, setRefreshKey] = useState(Date.now());
 
-  const handleToggle = (checked: boolean) => {
-    // When turning the camera on, create a new timestamp to bust the browser cache.
-    if (checked) {
+  // This effect listens for changes to the liveImageUrl from Firebase.
+  // When it changes, we generate a new key to force the <Image> component to re-fetch.
+  useEffect(() => {
+    if (liveImageUrl) {
       setRefreshKey(Date.now());
     }
-    // This just updates the 'cameraOn' boolean in Firebase.
+  }, [liveImageUrl]);
+
+  const handleToggle = (checked: boolean) => {
+    // This just updates the 'cameraOn' boolean in Firebase to signal the device.
     toggleCamera(checked);
   };
   
   // The final URL includes the cache-busting query parameter.
-  const displayUrl = `${liveImageUrl}?t=${refreshKey}`;
+  const displayUrl = liveImageUrl ? `${liveImageUrl}?t=${refreshKey}` : '';
 
   return (
     <Card>
@@ -48,7 +52,7 @@ export default function CameraConnectivity() {
         </div>
       </CardHeader>
       <CardContent>
-        {data.control.cameraOn ? (
+        {data.control.cameraOn && displayUrl ? (
           <Dialog>
             <DialogTrigger asChild>
               <div className="relative rounded-lg overflow-hidden border border-border cursor-pointer transition-transform hover:scale-[1.02]">
@@ -80,7 +84,7 @@ export default function CameraConnectivity() {
         ) : (
            <div className="relative rounded-lg border-2 border-dashed border-border aspect-video flex flex-col items-center justify-center bg-card/50">
               <VideoOff className="w-12 h-12 text-muted-foreground" />
-              <p className="mt-2 text-sm text-muted-foreground">Camera is offline</p>
+              <p className="mt-2 text-sm text-muted-foreground">{data.control.cameraOn ? 'Waiting for image...' : 'Camera is offline'}</p>
           </div>
         )}
       </CardContent>
