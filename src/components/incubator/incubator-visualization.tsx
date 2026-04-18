@@ -30,7 +30,7 @@ export default function IncubatorVisualization() {
       <CardContent className="p-4 md:p-6 h-full flex flex-col">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
             <div className="flex items-baseline gap-4">
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary tracking-tighter">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-destructive tracking-tighter">
                     {sensors.temperature.toFixed(1)}°C
                 </h2>
                 <p className="text-xl sm:text-2xl md:text-3xl font-medium text-blue-400 tracking-tighter">
