@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -40,7 +41,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 
 
 export default function HistoryLog() {
@@ -51,6 +52,29 @@ export default function HistoryLog() {
   const rawHistory = data.incubation?.incubationHistory || [];
   const incubationHistory = (Array.isArray(rawHistory) ? rawHistory : Object.values(rawHistory)).sort((a, b) => b.id - a.id);
 
+  const getFormattedTimestamp = (timestamp: string): string => {
+    if (!timestamp) return 'No date';
+    
+    // `parseISO` is strict and will handle the correct ISO format
+    let date = parseISO(timestamp);
+
+    // If `parseISO` fails, it returns an Invalid Date.
+    // In that case, we fall back to the more lenient `new Date()` parser
+    // which might handle the old `toLocaleString` format.
+    if (!isValid(date)) {
+      date = new Date(timestamp);
+    }
+
+    // If we have a valid date after all attempts, format it.
+    // Otherwise, return the original string.
+    return isValid(date) ? format(date, 'MMM d, yyyy, h:mm a') : timestamp;
+  };
+
+  const getFormattedHistoryDate = (timestamp: string): string => {
+      if (!timestamp) return 'N/A';
+      const date = parseISO(timestamp);
+      return isValid(date) ? format(date, 'MMM d, yyyy') : timestamp;
+  };
 
   return (
     <Card>
@@ -82,7 +106,7 @@ export default function HistoryLog() {
                             {incubationHistory.length > 0 ? (
                                 incubationHistory.map((item) => (
                                 <TableRow key={item.id}>
-                                    <TableCell>{format(parseISO(item.startDate), 'MMM d, yyyy')}</TableCell>
+                                    <TableCell>{getFormattedHistoryDate(item.startDate)}</TableCell>
                                     <TableCell>{item.eggType}</TableCell>
                                     <TableCell>
                                         <Badge variant={
@@ -202,7 +226,7 @@ export default function HistoryLog() {
                                 <div className="flex justify-between items-center">
                                     <div>
                                         <p className="text-sm font-medium">{log.event}</p>
-                                        <p className="text-xs text-muted-foreground">{log.timestamp}</p>
+                                        <p className="text-xs text-muted-foreground">{getFormattedTimestamp(log.timestamp)}</p>
                                     </div>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
@@ -313,10 +314,11 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     
     if (checked) {
       const updates: any = {};
-      const newSnapshotUrl = `https://picsum.photos/seed/${Date.now()}/600/400`;
+      const baseUrl = "https://opmkolckeetjuhliytnm.supabase.co/storage/v1/object/public/Eggcelent/latest.jpg";
+      const newSnapshotUrl = `${baseUrl}?t=${Date.now()}`;
 
       if (data.incubation.liveFeedUrl) {
-        const newLogEntry = { id: Date.now(), timestamp: new Date().toLocaleString(), image: data.incubation.liveFeedUrl, event: "Snapshot Archived"};
+        const newLogEntry = { id: Date.now(), timestamp: new Date().toISOString(), image: data.incubation.liveFeedUrl, event: "Snapshot Archived"};
         const currentLog = data.incubation.cameraLog || [];
         const logAsArray = Array.isArray(currentLog) ? currentLog : Object.values(currentLog);
         const newCameraLog = [newLogEntry, ...logAsArray];
@@ -327,7 +329,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       updates['control/cameraOn'] = true;
       
       updateValues(updates);
-      toast({ title: "Snapshot Captured", description: "A new image has been taken." });
+      toast({ title: "Snapshot Refreshed", description: "Displaying the latest image." });
 
     } else {
       setValue('control/cameraOn', false);
