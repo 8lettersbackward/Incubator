@@ -41,6 +41,7 @@ export interface IncubatorData {
     targetTemperature: number;
     targetHumidity: number;
     accessCode: string;
+    autonomousClimate: boolean;
   };
   sensors: {
     temperature: number;
@@ -86,6 +87,7 @@ interface IncubatorContextType {
   deleteCameraLogEntry: (logId: number) => void;
   clearCameraLog: () => void;
   deleteHistoryEntry: (historyId: number) => void;
+  setAutonomousClimate: (status: boolean) => void;
 }
 
 export const EGG_INCUBATION_PERIODS: { [key: string]: number } = {
@@ -111,6 +113,7 @@ export const initialData: IncubatorData = {
     targetTemperature: 35.0,
     targetHumidity: 50,
     accessCode: "",
+    autonomousClimate: true,
   },
   sensors: {
     temperature: 37.5,
@@ -148,9 +151,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // On initial mount for a user, ensure the buzzer is reset to OFF.
-    // This prevents the alarm from sounding immediately if the app was closed
-    // in a critical state. The alert-checking logic will then determine
-    // if it needs to be turned on again.
     if (database && user) {
       const buzzerRef = ref(database, `incubators/${user.uid}/alertSystem/buzzer`);
       set(buzzerRef, false);
@@ -167,7 +167,6 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onValue(incubatorRef, (snapshot) => {
       if (snapshot.exists()) {
         const remoteData = snapshot.val() || {};
-        // Deep merge remote data with initialData to prevent crashes from missing fields
         const mergedData = {
           ...initialData,
           ...remoteData,
@@ -186,12 +185,10 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   useEffect(() => {
-    // This effect handles automatic system responses to environmental changes,
-    // including alerts and temperature regulation. It should not be blocked by the UI lock.
     if (!database || !user || !data.sensors || !data.control) return;
   
     const { temperature, humidity } = data.sensors;
-    const { mist, targetTemperature, targetHumidity } = data.control;
+    const { mist, targetTemperature, targetHumidity, heater, fan, autonomousClimate } = data.control;
     const currentAlert = data.alertSystem;
   
     const updates: { [key: string]: any } = {};
@@ -199,84 +196,74 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     // --- Alert Logic ---
     const TEMP_ALERT_DEVIATION = 5.0;
     const HUMIDITY_ALERT_DEVIATION = 20;
-  
-    const newAlert: AlertSystem = {
-      status: 'SYSTEM_OK',
-      temperatureState: 'NORMAL',
-      humidityState: 'NORMAL',
-      buzzer: false,
-      message: 'System stable. Optimal conditions.',
-    };
-  
+    const newAlert: AlertSystem = { status: 'SYSTEM_OK', temperatureState: 'NORMAL', humidityState: 'NORMAL', buzzer: false, message: 'System stable. Optimal conditions.'};
     let messages: string[] = [];
     let isCritical = false;
-  
     const tempDiff = temperature - targetTemperature;
     if (Math.abs(tempDiff) > TEMP_ALERT_DEVIATION) {
       isCritical = true;
       newAlert.temperatureState = tempDiff > 0 ? 'HIGH' : 'LOW';
       messages.push(`Temp is ${newAlert.temperatureState.toLowerCase()}`);
     }
-  
     const humidityDiff = humidity - targetHumidity;
     if (Math.abs(humidityDiff) > HUMIDITY_ALERT_DEVIATION) {
       isCritical = true;
       newAlert.humidityState = humidityDiff > 0 ? 'HIGH' : 'LOW';
       messages.push(`Humidity is ${newAlert.humidityState.toLowerCase()}`);
     }
-    
     if (isCritical) {
       newAlert.status = 'CRITICAL';
       newAlert.buzzer = true;
       newAlert.message = `CRITICAL: ${messages.join(' & ')}.`;
     }
-  
-    // Check if alert state needs updating
     if (JSON.stringify(newAlert) !== JSON.stringify(currentAlert)) {
       updates['alertSystem'] = newAlert;
-      // Send a toast notification only when a new critical state is entered
       if (newAlert.status === 'CRITICAL' && currentAlert.status !== 'CRITICAL') {
-        toast({
-            variant: 'destructive',
-            title: 'Critical Alert',
-            description: newAlert.message,
-            duration: 12000,
-        });
+        toast({ variant: 'destructive', title: 'Critical Alert', description: newAlert.message, duration: 12000 });
       }
     }
 
     // --- Automated Humidity Control Logic (Mist) ---
     const HUMIDITY_LOWER_BOUND = targetHumidity - 5;
     let newMistState = mist;
-
     if (humidity < HUMIDITY_LOWER_BOUND) {
-      // Humidity is too low, turn mist on.
       newMistState = true;
     } else if (humidity >= targetHumidity) {
-      // Humidity is at or above target, turn mist off.
       newMistState = false;
     }
-    // In the dead zone between lower bound and target, state remains unchanged.
-
     if (newMistState !== mist) {
       updates['control/mist'] = newMistState;
     }
 
-    // If there are any changes, send a single update to Firebase.
+    // --- Autonomous Temperature Control ---
+    if (autonomousClimate) {
+      let newHeaterState = heater;
+      if (temperature < targetTemperature) {
+        newHeaterState = true;
+      } else {
+        newHeaterState = false;
+      }
+
+      let newFanState = fan;
+      if (temperature > targetTemperature + 5) {
+        newFanState = true;
+      } else {
+        newFanState = false;
+      }
+
+      if (newHeaterState !== heater) {
+        updates['control/heater'] = newHeaterState;
+      }
+      if (newFanState !== fan) {
+        updates['control/fan'] = newFanState;
+      }
+    }
+
     if (Object.keys(updates).length > 0) {
       const incubatorRef = ref(database, `incubators/${user.uid}`);
       update(incubatorRef, updates);
     }
-  }, [
-      user, 
-      toast,
-      data.sensors.temperature, 
-      data.sensors.humidity, 
-      data.control.targetTemperature, 
-      data.control.targetHumidity, 
-      data.alertSystem,
-      data.control.mist,
-    ]);
+  }, [ user, toast, data.sensors, data.control, data.alertSystem ]);
 
   const getDbPath = useCallback((path: string) => {
     if (!user) return null;
@@ -306,8 +293,22 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
     update(dbRef, updates);
   }, [isLocked, toast, getDbPath]);
 
-  const toggleFan = useCallback(() => setValue('control/fan', !data.control.fan), [setValue, data.control.fan]);
-  const toggleHeater = useCallback(() => setValue('control/heater', !data.control.heater), [setValue, data.control.heater]);
+  const toggleHeater = useCallback(() => {
+    if (isLocked) { toast({ variant: "destructive", title: "System Locked" }); return; }
+    updateValues({
+        'control/autonomousClimate': false,
+        'control/heater': !data.control.heater,
+    });
+  }, [isLocked, toast, updateValues, data.control.heater]);
+
+  const toggleFan = useCallback(() => {
+      if (isLocked) { toast({ variant: "destructive", title: "System Locked" }); return; }
+      updateValues({
+          'control/autonomousClimate': false,
+          'control/fan': !data.control.fan,
+      });
+  }, [isLocked, toast, updateValues, data.control.fan]);
+
   const toggleMotor = useCallback(() => setValue('control/motor', !data.control.motor), [setValue, data.control.motor]);
   const toggleMist = useCallback(() => setValue('control/mist', !data.control.mist), [setValue, data.control.mist]);
   
@@ -322,12 +323,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       const newSnapshotUrl = `https://picsum.photos/seed/${Date.now()}/600/400`;
 
       if (data.incubation.liveFeedUrl) {
-        const newLogEntry = {
-          id: Date.now(),
-          timestamp: new Date().toLocaleString(),
-          image: data.incubation.liveFeedUrl,
-          event: "Snapshot Archived",
-        };
+        const newLogEntry = { id: Date.now(), timestamp: new Date().toLocaleString(), image: data.incubation.liveFeedUrl, event: "Snapshot Archived"};
         const currentLog = data.incubation.cameraLog || [];
         const logAsArray = Array.isArray(currentLog) ? currentLog : Object.values(currentLog);
         const newCameraLog = [newLogEntry, ...logAsArray];
@@ -338,10 +334,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
       updates['control/cameraOn'] = true;
       
       updateValues(updates);
-      toast({
-        title: "Snapshot Captured",
-        description: "A new image has been taken.",
-      });
+      toast({ title: "Snapshot Captured", description: "A new image has been taken." });
 
     } else {
       setValue('control/cameraOn', false);
@@ -393,40 +386,25 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
 
     if (newStatus) { // Starting incubation
       const newEntry: IncubationHistoryEntry = {
-        id: Date.now(),
-        startDate: new Date().toISOString(),
-        endDate: null,
-        eggType: data.incubation.eggType,
-        totalDays: data.incubation.totalDays,
-        outcome: 'In Progress',
-        hatchedCount: 0,
-        totalEggs: data.incubation.numberOfEggs,
+        id: Date.now(), startDate: new Date().toISOString(), endDate: null, eggType: data.incubation.eggType, totalDays: data.incubation.totalDays,
+        outcome: 'In Progress', hatchedCount: 0, totalEggs: data.incubation.numberOfEggs,
       };
-      
       updates['incubation/isIncubating'] = true;
       updates['incubation/currentDay'] = 1;
       updates['incubation/activeCycleId'] = newEntry.id;
       updates['incubation/incubationHistory'] = [newEntry, ...history];
-
       updateValues(updates);
       toast({ title: "Incubation Started", description: `The cycle for ${data.incubation.eggType} eggs has begun and logged.` });
 
     } else { // Stopping/Cancelling incubation
       const activeId = data.incubation.activeCycleId;
       const activeCycleIndex = history.findIndex(h => h.id === activeId);
-
       if (activeCycleIndex > -1) {
-        history[activeCycleIndex] = {
-          ...history[activeCycleIndex],
-          outcome: 'Cancelled',
-          endDate: new Date().toISOString(),
-        };
+        history[activeCycleIndex] = { ...history[activeCycleIndex], outcome: 'Cancelled', endDate: new Date().toISOString() };
         updates['incubation/incubationHistory'] = history;
       }
-      
       updates['incubation/isIncubating'] = false;
       updates['incubation/activeCycleId'] = null;
-
       updateValues(updates);
       toast({ title: "Incubation Stopped", description: "The incubation cycle has been cancelled and logged." });
     }
@@ -441,11 +419,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const unlock = useCallback((pin: string) => {
     return new Promise<boolean>((resolve) => {
       if (!data.control.accessCode) {
-        toast({
-          variant: "destructive",
-          title: "PIN Not Set",
-          description: "Please set a PIN before unlocking.",
-        });
+        toast({ variant: "destructive", title: "PIN Not Set", description: "Please set a PIN before unlocking." });
         resolve(false);
         return;
       }
@@ -460,10 +434,7 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
 
   const lock = useCallback(() => {
     setIsLocked(true);
-    toast({
-      title: "System Locked",
-      description: "Controls are now secured.",
-    });
+    toast({ title: "System Locked", description: "Controls are now secured." });
   }, [toast]);
   
   const setAccessCode = useCallback((pin: string) => {
@@ -476,63 +447,54 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
   const deleteCameraLogEntry = useCallback((logId: number) => {
       const fullPath = getDbPath('incubation/cameraLog');
       if (!database || !fullPath) return;
-      
       const currentLog = data.incubation.cameraLog || [];
       const logAsArray = Array.isArray(currentLog) ? currentLog : Object.values(currentLog);
       const newCameraLog = logAsArray.filter(entry => entry.id !== logId);
-
       const dbRef = ref(database, fullPath);
       set(dbRef, newCameraLog);
-
-      toast({
-          title: "Log Entry Deleted",
-          description: "The snapshot has been removed from your log."
-      });
+      toast({ title: "Log Entry Deleted", description: "The snapshot has been removed from your log."});
   }, [getDbPath, data.incubation.cameraLog, toast]);
 
   const clearCameraLog = useCallback(() => {
       const fullPath = getDbPath('incubation/cameraLog');
       if (!database || !fullPath) return;
-
       const dbRef = ref(database, fullPath);
       set(dbRef, []);
-      
-      toast({
-          title: "Camera Log Cleared",
-          description: "All snapshots have been deleted."
-      });
+      toast({ title: "Camera Log Cleared", description: "All snapshots have been deleted." });
   }, [getDbPath, toast]);
 
   const deleteHistoryEntry = useCallback((historyId: number) => {
     const fullPath = getDbPath('incubation/incubationHistory');
     if (!database || !fullPath) return;
-
     const currentHistory = data.incubation.incubationHistory || [];
     const historyAsArray = Array.isArray(currentHistory) ? currentHistory : Object.values(currentHistory);
     const newHistory = historyAsArray.filter(entry => entry.id !== historyId);
-    
     if (data.incubation.activeCycleId === historyId) {
         const updates: { [key: string]: any } = {};
         updates['incubation/incubationHistory'] = newHistory;
         updates['incubation/isIncubating'] = false;
         updates['incubation/activeCycleId'] = null;
         updateValues(updates);
-        toast({
-          variant: 'destructive',
-          title: "Active Cycle Deleted",
-          description: "The active incubation cycle has been deleted."
-      });
+        toast({ variant: 'destructive', title: "Active Cycle Deleted", description: "The active incubation cycle has been deleted." });
     } else {
         const dbRef = ref(database, fullPath);
         set(dbRef, newHistory);
-        toast({
-            title: "History Entry Deleted",
-            description: "The incubation record has been removed."
-        });
+        toast({ title: "History Entry Deleted", description: "The incubation record has been removed." });
     }
   }, [getDbPath, data.incubation, toast, updateValues]);
 
-  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleMist, toggleCamera, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, toggleIncubation, setNumberOfEggs, deleteCameraLogEntry, clearCameraLog, deleteHistoryEntry };
+  const setAutonomousClimate = useCallback((status: boolean) => {
+    if (isLocked) {
+        toast({ variant: "destructive", title: "System Locked", description: "Unlock to change climate mode." });
+        return;
+    }
+    const fullPath = getDbPath('control/autonomousClimate');
+    if (!database || !fullPath) return;
+    const dbRef = ref(database, fullPath);
+    set(dbRef, status);
+  }, [isLocked, toast, getDbPath]);
+
+  const value = { data, isLocked, toggleFan, toggleHeater, toggleMotor, toggleMist, toggleCamera, setEggType, unlock, lock, setAccessCode, setTargetTemperature, setTargetHumidity, setSensorTemperature, setSensorHumidity, setCurrentDay, setTotalDays, resetIncubation, toggleIncubation, setNumberOfEggs, deleteCameraLogEntry, clearCameraLog, deleteHistoryEntry, setAutonomousClimate };
 
   return (
     <IncubatorContext.Provider value={value}>

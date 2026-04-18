@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useIncubator } from "@/contexts/incubator-context";
-import { LockIcon, KeyRound, Bird, Thermometer, Droplets, Egg, Minus, Plus } from "lucide-react";
+import { LockIcon, KeyRound, Bird, Thermometer, Droplets, Egg, Minus, Plus, Bot } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import UnlockDialog from "./unlock-dialog";
@@ -14,9 +14,10 @@ import SystemStatus from "./system-status";
 import EnvironmentSlider from "./environment-slider";
 import { Input } from "../ui/input";
 import { useEffect, useState } from "react";
+import { Switch } from "../ui/switch";
 
 export default function ControlPanel() {
-  const { data, isLocked, lock, setEggType, setTargetTemperature, setTargetHumidity, setNumberOfEggs } = useIncubator();
+  const { data, isLocked, lock, setEggType, setTargetTemperature, setTargetHumidity, setNumberOfEggs, setAutonomousClimate } = useIncubator();
   const { alertSystem, incubation, control } = data;
   const { numberOfEggs, eggType } = incubation;
   const [eggInput, setEggInput] = useState(String(numberOfEggs || ''));
@@ -116,6 +117,19 @@ export default function ControlPanel() {
               unit="%"
               isSafe={alertSystem.humidityState === 'NORMAL'}
               onValueChange={handleHumidityChange}
+              disabled={isLocked}
+            />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <Label htmlFor="autonomous-climate-switch" className="flex items-center gap-2 font-medium">
+              <Bot className="w-5 h-5 text-primary" />
+              Autonomous Climate
+            </Label>
+            <Switch
+              id="autonomous-climate-switch"
+              checked={control.autonomousClimate}
+              onCheckedChange={setAutonomousClimate}
               disabled={isLocked}
             />
           </div>

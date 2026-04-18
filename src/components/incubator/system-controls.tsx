@@ -22,19 +22,20 @@ const ControlItem = ({ icon, label, description, checked, onCheckedChange, disab
 
 export default function SystemControls() {
     const { data, isLocked, toggleHeater, toggleFan, toggleMotor, toggleMist } = useIncubator();
+    const isClimateAuto = data.control.autonomousClimate;
 
     const controls = [
         {
             icon: <Lightbulb className="w-6 h-6 text-primary" />,
             label: "Heat Lamp",
-            description: "Heating element status",
+            description: isClimateAuto ? "Automatically controlled" : "Heating element status",
             checked: data.control.heater,
             onCheckedChange: toggleHeater,
         },
         {
             icon: <Fan className={cn("w-6 h-6 text-primary", data.control.fan && "animate-spin")} />,
             label: "Ventilation Fan",
-            description: "Air circulation system",
+            description: isClimateAuto ? "Automatically controlled" : "Air circulation system",
             checked: data.control.fan,
             onCheckedChange: toggleFan,
         },
