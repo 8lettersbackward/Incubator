@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase/auth/use-user';
 import { database } from '@/firebase/config';
-import { ref, get, update } from 'firebase/database';
+import { ref, set } from 'firebase/database';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -63,21 +63,7 @@ export default function IncubatorSetupPage() {
     setIsCreating(true);
 
     try {
-      // Sanitize the name to be used as a key. 
-      // This is a safer way to check for duplicates and create a readable index.
-      const sanitizedNameKey = values.name.toLowerCase().replace(/[\.\s\$#\[\]\/]/g, '_');
-      const nameRef = ref(database, `incubator_names/${sanitizedNameKey}`);
-      const nameSnapshot = await get(nameRef);
-
-      if (nameSnapshot.exists()) {
-          toast({
-            variant: 'destructive',
-            title: 'Name Already Exists',
-            description: `An incubator with the name "${values.name}" already exists. Please choose a different name.`,
-          });
-          setIsCreating(false);
-          return;
-      }
+      const incubatorRef = ref(database, `incubators/${user.uid}`);
       
       const newIncubatorData = {
           ...initialData,
@@ -88,12 +74,7 @@ export default function IncubatorSetupPage() {
           }
       };
 
-      // Perform an atomic update to write both the incubator data and the name index
-      const updates: { [key: string]: any } = {};
-      updates[`incubators/${user.uid}`] = newIncubatorData;
-      updates[`incubator_names/${sanitizedNameKey}`] = user.uid;
-
-      await update(ref(database), updates);
+      await set(incubatorRef, newIncubatorData);
 
       toast({
         title: 'Incubator Created!',
