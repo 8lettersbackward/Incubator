@@ -271,13 +271,15 @@ export const IncubatorProvider = ({ children }: { children: ReactNode }) => {
         let newFanState = fan;
         let newMistState = mist;
 
-        // NEW LOGIC: Heater is always on, fan regulates.
-        newHeaterState = true; 
-
+        // Temperature Control Logic
         if (temperature > targetTemperature) {
-            newFanState = true; // Turn on fan to cool down.
+            // If it's too hot, turn on fan and turn off heater.
+            newFanState = true;
+            newHeaterState = false;
         } else {
-            newFanState = false; // Turn off fan when at or below target.
+            // If it's at or below target, turn off fan and turn on heater.
+            newFanState = false;
+            newHeaterState = true;
         }
 
         // Humidity Control (remains the same)
@@ -509,5 +511,7 @@ export const useIncubator = (): IncubatorContextType => {
   }
   return context;
 };
+
+    
 
     
