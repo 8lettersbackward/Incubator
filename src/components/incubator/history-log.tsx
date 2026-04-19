@@ -80,10 +80,10 @@ export default function HistoryLog() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Start Date</TableHead>
-                                <TableHead>Egg Type</TableHead>
-                                <TableHead>Outcome</TableHead>
-                                <TableHead className="text-center">Hatched</TableHead>
+                                <TableHead className="whitespace-nowrap">Start Date</TableHead>
+                                <TableHead className="whitespace-nowrap">Egg Type</TableHead>
+                                <TableHead className="whitespace-nowrap">Outcome</TableHead>
+                                <TableHead className="text-center whitespace-nowrap">Hatched</TableHead>
                                 <TableHead className="text-right sr-only">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -91,7 +91,7 @@ export default function HistoryLog() {
                             {incubationHistory.length > 0 ? (
                                 incubationHistory.map((item) => (
                                 <TableRow key={item.id}>
-                                    <TableCell>{getFormattedHistoryDate(item.startDate)}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{getFormattedHistoryDate(item.startDate)}</TableCell>
                                     <TableCell>{item.eggType}</TableCell>
                                     <TableCell>
                                         <Badge variant={
@@ -101,7 +101,7 @@ export default function HistoryLog() {
                                             {item.outcome}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="text-center font-medium">
+                                    <TableCell className="text-center font-medium whitespace-nowrap">
                                     {item.outcome === 'In Progress' || item.outcome === 'Cancelled' ? '-' : `${item.hatchedCount}/${item.totalEggs}`}
                                     </TableCell>
                                     <TableCell className="text-right">
