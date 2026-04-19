@@ -1,42 +1,69 @@
-const CACHE_NAME = 'eggcelent-cache-v1';
+const CACHE_NAME = "eggcelent-cache-v1";
 
-self.addEventListener('install', (event) => {
-  // Activate worker immediately
-  event.waitUntil(self.skipWaiting()); 
+self.addEventListener("install", (event) => {
+  // Skip waiting so the new service worker activates immediately.
+  self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
-  // Become available to all pages
-  event.waitUntil(self.clients.claim()); 
+self.addEventListener("activate", (event) => {
+  // Claim clients to take control immediately.
+  event.waitUntil(self.clients.claim());
+  // Clean up old caches.
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((cacheName) => cacheName !== CACHE_NAME)
+          .map((cacheName) => caches.delete(cacheName))
+      );
+    })
+  );
 });
 
-self.addEventListener('fetch', event => {
-  // We only cache GET requests to our own origin
-  if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
-    return;
-  }
-  
-  // Network-first strategy
-  event.respondWith(
-    (async () => {
-      try {
-        // Try to fetch from the network
-        const networkResponse = await fetch(event.request);
-        // If successful, open the cache and store the response
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(event.request, networkResponse.clone());
-        // Return the network response
-        return networkResponse;
-      } catch (error) {
-        // If the network fails, try to get the response from the cache.
-        const cachedResponse = await caches.match(event.request);
-        if (cachedResponse) {
+self.addEventListener("fetch", (event) => {
+  // Check if the request is a navigation to a new page.
+  if (event.request.mode === "navigate") {
+    // Network-first for navigation.
+    event.respondWith(
+      (async () => {
+        try {
+          // First, try to fetch from the network.
+          const networkResponse = await fetch(event.request);
+          return networkResponse;
+        } catch (error) {
+          // If the network fails, try to serve from the cache.
+          const cache = await caches.open(CACHE_NAME);
+          const cachedResponse = await cache.match(event.request);
+          // If a cached response is found, return it. Otherwise, this will fail.
           return cachedResponse;
         }
-        // If it's not in the cache, the request will fail.
-        console.warn('Fetch failed and not in cache:', event.request.url);
-        return Response.error();
-      }
-    })()
-  );
+      })()
+    );
+  } else if (
+    // Check if the request is for a static asset (CSS, JS, worker, image).
+    event.request.destination === "style" ||
+    event.request.destination === "script" ||
+    event.request.destination === "worker" ||
+    event.request.destination === "image"
+  ) {
+    // Stale-while-revalidate for static assets.
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.match(event.request).then((cachedResponse) => {
+          const fetchedResponse = fetch(event.request).then((networkResponse) => {
+            if (networkResponse.ok) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          });
+
+          // Return the cached response if it's available, otherwise wait for the network.
+          return cachedResponse || fetchedResponse;
+        });
+      })
+    );
+  } else {
+    // For other types of requests, just fetch from the network.
+    return;
+  }
 });
